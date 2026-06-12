@@ -1,1202 +1,492 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Rosetta Engine">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a0a08">
-<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Rosetta%20Engine%20v6%22%2C%22short_name%22%3A%22Rosetta%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a08%22%2C%22theme_color%22%3A%22%23c9a84c%22%7D">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0a08'/%3E%3Ctext y='75' x='50' text-anchor='middle' font-size='70' fill='%23c9a84c'%3E%E2%98%A5%3C/text%3E%3C/svg%3E">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Rosetta Engine v6.6 // Portal Extraction Layer</title>
+  <!-- High-velocity asynchronous OpenCV web runtime injection -->
+  <script async src="https://docs.opencv.org/4.8.0/opencv.js" type="text/javascript"></script>
+  <style>
+    :root {
+      --bg-base: #030508;
+      --bg-panel: #090D16;
+      --border-line: #1E293B;
+      --neon-cyan: #00F0FF;
+      --neon-amber: #FFB800;
+      --text-slate: #E2E8F0;
+      --alert-red: #EF4444;
+    }
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>☥ Rosetta Engine v6</title>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cinzel:wght@400;700;900&display=swap');
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-:root {
-  --gold:#c9a84c; --gold-bright:#f0c040; --gold-dim:#7a6030;
-  --amber:#ff9a00; --deep:#0a0a08; --panel:#0f0f0c; --panel2:#0a0a10;
-  --border:#2a2a1a; --border2:#2a2a3a;
-  --green:#39ff14; --green-dim:#1a7a0a;
-  --red:#ff3030; --cyan:#00e5ff; --purple:#9d4edd;
-  --text:#ccc8a0; --text-dim:#555548; --text-mid:#888870;
-}
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-slate);
+      font-family: 'Courier New', Courier, monospace;
+      padding: 12px;
+      overflow-x: hidden;
+    }
 
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--deep);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden;}
+    .rosetta-grid {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 16px;
+      max-w: 1200px;
+      margin: 0 auto;
+    }
 
-/* SCANLINE OVERLAY */
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:9999;}
+    @media (min-width: 768px) {
+      .rosetta-grid {
+        grid-template-cols: 3fr 2fr;
+      }
+    }
 
-/* BOOT */
-#boot{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;gap:10px;}
-.boot-ankh{font-size:56px;animation:pulse-gold 1s infinite;}
-.boot-title{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);letter-spacing:6px;}
-.boot-msg{font-size:10px;color:var(--text-mid);letter-spacing:2px;min-height:14px;}
-.boot-bar{width:300px;height:2px;background:var(--border);margin-top:12px;overflow:hidden;}
-.boot-fill{height:100%;background:var(--gold);width:0%;transition:width 0.12s;box-shadow:0 0 8px var(--gold);}
-.boot-credits{font-size:8px;color:var(--text-dim);letter-spacing:3px;margin-top:5px;}
+    .panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-line);
+      border-radius: 16px;
+      padding: 16px;
+      position: relative;
+    }
 
-/* HEADER */
-header{text-align:center;padding:14px 12px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#111108 0%,var(--deep) 100%);}
-header .ankh{font-size:1.6rem;display:block;color:var(--gold-bright);text-shadow:0 0 20px rgba(240,192,64,0.7);animation:pulse-gold 3s infinite;}
-header h1{font-family:'Cinzel',serif;font-size:0.95rem;color:var(--gold);letter-spacing:0.2em;text-shadow:0 0 14px rgba(201,168,76,0.4);}
-header .sub{font-size:0.6rem;color:var(--text-dim);letter-spacing:0.3em;margin-top:2px;}
+    .header-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-b: 1px solid var(--border-line);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
 
-/* STATUS BAR */
-.status-bar{display:flex;justify-content:center;gap:12px;padding:4px 12px;font-size:0.58rem;color:#555;border-bottom:1px solid var(--border);flex-wrap:wrap;}
-.status-bar .on{color:var(--green);}
-.status-bar .off{color:var(--red);}
-.status-bar .warn{color:var(--amber);}
-.status-bar .gpu-on{color:var(--gold-bright);}
+    .hud-title {
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
 
-/* KB HINT */
-.kb-hint{background:rgba(201,168,76,0.03);border-bottom:1px solid var(--border);padding:3px 12px;font-size:7px;color:var(--text-dim);letter-spacing:2px;text-align:center;}
-.kb-hint span{color:var(--gold-dim);}
+    .viewport-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background-color: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
 
-/* MAIN GRID */
-.main-grid{display:grid;grid-template-columns:1fr;gap:8px;padding:8px;max-width:1100px;margin:0 auto;}
-@media(min-width:650px){.main-grid{grid-template-columns:1fr 1fr;}}
-@media(min-width:950px){.main-grid{grid-template-columns:1fr 1fr 1fr;}}
+    video, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+    }
+    
+    .pip-wrapper {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 120px;
+      height: 120px;
+      border: 2px solid var(--neon-cyan);
+      border-radius: 8px;
+      z-index: 30;
+      background: #000;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    }
 
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
-.panel.full-width{grid-column:1/-1;}
-.panel-header{background:linear-gradient(90deg,#1a1a10,#111108);border-bottom:1px solid var(--border);padding:5px 9px;font-size:0.62rem;color:var(--gold);letter-spacing:0.14em;display:flex;justify-content:space-between;align-items:center;}
-.badge{font-size:0.5rem;padding:1px 5px;border-radius:2px;background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.25);color:var(--green);}
-.badge.gpu{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3);color:var(--gold-bright);}
-.badge.tf{background:rgba(255,152,0,0.08);border-color:rgba(255,152,0,0.3);color:var(--amber);}
-.badge.purple{background:rgba(157,78,221,0.08);border-color:rgba(157,78,221,0.3);color:var(--purple);}
+    .pip-title {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 8px;
+      color: var(--neon-cyan);
+      z-index: 40;
+      background: rgba(0,0,0,0.7);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
 
-/* CAMERA */
-.camera-wrap{position:relative;width:100%;aspect-ratio:4/3;background:#000;overflow:hidden;}
-#videoFeed{width:100%;height:100%;object-fit:cover;display:block;}
-#overlayCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
-.crosshair{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
-.crosshair::before,.crosshair::after{content:'';position:absolute;background:rgba(201,168,76,0.35);}
-.crosshair::before{width:1px;height:38%;}
-.crosshair::after{width:38%;height:1px;}
-.corner{position:absolute;width:16px;height:16px;border-color:var(--gold);border-style:solid;opacity:0.65;}
-.corner.tl{top:7px;left:7px;border-width:2px 0 0 2px;}
-.corner.tr{top:7px;right:7px;border-width:2px 2px 0 0;}
-.corner.bl{bottom:7px;left:7px;border-width:0 0 2px 2px;}
-.corner.br{bottom:7px;right:7px;border-width:0 2px 2px 0;}
-.no-cam{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#333;font-size:0.65rem;letter-spacing:0.1em;}
-.no-cam span{font-size:1.8rem;opacity:0.25;}
-.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scan 2s linear infinite;opacity:0.35;pointer-events:none;}
-@keyframes scan{0%{top:-2%;}100%{top:102%;}}
+    .control-row {
+      margin-top: 16px;
+    }
 
-/* GPU WARP CANVAS */
-#warpCanvas{width:100%;aspect-ratio:1/1;background:#000;display:block;}
+    .control-row label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94A3B8;
+      margin-bottom: 6px;
+    }
 
-/* GLYPH DECODER */
-.decoder-wrap{padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:160px;position:relative;}
-.dec-symbol{font-size:52px;filter:drop-shadow(0 0 14px var(--gold));animation:pulse-gold 2s infinite;}
-.dec-name{font-family:'Cinzel',serif;font-size:16px;color:var(--gold-bright);letter-spacing:4px;font-weight:700;}
-.dec-phonetic{font-size:10px;color:var(--text-mid);letter-spacing:3px;}
-.dec-meaning{font-size:9px;color:var(--text);text-align:center;max-width:260px;line-height:1.7;}
-.dec-freq{font-size:9px;color:var(--cyan);position:absolute;bottom:6px;right:8px;}
-.dec-tf{font-size:8px;color:var(--amber);position:absolute;top:6px;right:8px;display:none;}
-.dec-match{font-size:7px;color:var(--green);border:1px solid var(--green-dim);padding:1px 5px;position:absolute;top:6px;left:8px;display:none;animation:pulse-green 1s infinite;}
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #1E293B;
+      border-radius: 4px;
+      appearance: none;
+      outline: none;
+    }
 
-/* DATA CELLS */
-.data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px;}
-.data-cell{background:#0a0a08;border:1px solid var(--border);padding:6px;border-radius:2px;}
-.dc-label{font-size:7px;color:var(--text-dim);letter-spacing:2px;margin-bottom:2px;}
-.dc-val{font-size:10px;color:var(--gold);}
-.dc-val.empty{color:var(--text-dim);}
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
 
-/* WAVE */
-.wave-wrap{height:40px;background:#0a0a08;border:1px solid var(--border);border-radius:2px;margin:0 8px 6px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
-.wave-bar{width:2px;background:var(--gold);margin:0 1px;border-radius:1px;transition:height 0.08s;opacity:0.7;}
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #1E293B, #0F172A);
+      border: 1px solid var(--border-line);
+      color: #FFF;
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: bold;
+      letter-spacing: 1px;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
 
-/* RESONANCE RING — Jenova's acoustic indicator */
-.resonance-ring{position:absolute;width:80px;height:80px;border:2px solid var(--gold);border-radius:50%;opacity:0;transition:opacity 0.3s;pointer-events:none;box-shadow:0 0 20px rgba(201,168,76,0.4);}
-.resonance-ring.active{animation:ring-pulse 1s ease-out infinite;}
-@keyframes ring-pulse{0%{transform:scale(0.8);opacity:0.8;}100%{transform:scale(2);opacity:0;}}
+    .btn-cyan {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.05);
+    }
 
-/* CONTROLS */
-.ctrl-bar{display:flex;gap:4px;flex-wrap:wrap;padding:6px 8px;}
-.btn{background:#0f0f0c;border:1px solid var(--border);color:var(--text-mid);padding:5px 8px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;transition:all 0.15s;border-radius:2px;display:flex;align-items:center;gap:3px;}
-.btn:hover{border-color:var(--gold);color:var(--gold);}
-.btn.primary{border-color:var(--gold-dim);color:var(--gold);background:rgba(201,168,76,0.04);}
-.btn.primary:hover{background:rgba(201,168,76,0.1);}
-.btn.cam{border-color:var(--cyan);color:var(--cyan);}
-.btn.cam.on{background:rgba(0,229,255,0.08);}
-.btn.gpu{border-color:var(--gold-bright);color:var(--gold-bright);}
-.btn.gpu.on{background:rgba(240,192,64,0.08);}
-.btn.wgl{border-color:var(--purple);color:var(--purple);}
-.btn.wgl.on{background:rgba(157,78,221,0.08);}
-.btn.tf{border-color:var(--amber);color:var(--amber);}
-.btn.tf.on{background:rgba(255,152,0,0.08);}
-.btn.danger:hover{border-color:var(--red);color:var(--red);}
-.btn:active{transform:scale(0.96);}
+    .btn:active {
+      border-color: var(--neon-amber);
+      color: var(--neon-amber);
+      transform: scale(0.98);
+    }
 
-/* SLIDERS */
-.slider-row{display:flex;align-items:center;gap:8px;font-size:0.6rem;color:#777;padding:3px 8px;}
-.slider-row label{min-width:100px;color:var(--text-dim);}
-.slider-row .sv{min-width:28px;text-align:right;color:var(--gold);}
-input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:#1a1a10;border-radius:2px;outline:none;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 5px rgba(201,168,76,0.5);}
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      border-color: var(--border-line);
+      color: #475569;
+    }
 
-/* GLYPH LIBRARY */
-.glyph-grid-lib{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:8px;}
-.glyph-btn{background:#0a0a08;border:1px solid var(--border);color:var(--text);padding:6px 2px;cursor:pointer;text-align:center;transition:all 0.15s;border-radius:2px;}
-.glyph-btn:hover{border-color:var(--gold);}
-.glyph-btn.selected{border-color:var(--gold-bright);background:rgba(201,168,76,0.08);}
-.glyph-btn .gs{font-size:16px;display:block;}
-.glyph-btn .gn{font-size:6px;color:var(--text-dim);letter-spacing:1px;}
-.glyph-btn.selected .gn{color:var(--gold);}
-#glyph-search{width:calc(100% - 16px);margin:0 8px 6px;background:#0a0a08;border:1px solid var(--border);color:var(--text);padding:5px;font-family:'Share Tech Mono',monospace;font-size:9px;outline:none;border-radius:2px;}
-#glyph-search:focus{border-color:var(--gold);}
+    .ledger-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-h: 320px;
+      overflow-y: auto;
+      margin-top: 12px;
+      padding-right: 4px;
+    }
 
-/* VAULT GRID */
-.vault-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:8px;}
-@media(max-width:650px){.vault-grid{grid-template-columns:repeat(4,1fr);}}
-.vault-thumb{aspect-ratio:1;background:#0a0a08;border:1px solid var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#333;cursor:pointer;overflow:hidden;transition:border-color 0.15s;}
-.vault-thumb:hover{border-color:var(--gold);}
-.vault-thumb canvas{width:100%;height:100%;}
+    .ledger-row {
+      background-color: rgba(255,255,255,0.01);
+      border: 1px solid var(--border-line);
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-/* SEQUENCE LOG */
-.seq-log{padding:8px;min-height:80px;max-height:140px;overflow-y:auto;font-size:9px;}
-.seq-entry{display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid var(--border);animation:fadeIn 0.3s;}
-.se-sym{font-size:14px;}.se-name{color:var(--gold);font-size:8px;}.se-freq{color:var(--cyan);font-size:7px;margin-left:auto;}
-.seq-meaning{padding:8px;font-size:9px;color:var(--text-mid);line-height:1.6;border-top:1px solid var(--border);min-height:40px;}
-.seq-meaning .sm-title{color:var(--gold);font-size:7px;letter-spacing:2px;margin-bottom:3px;}
+    .ledger-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #475569;
+    }
 
-/* VAULT MONITOR */
-.vault-mon{padding:8px;}
-.vr{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:8px;}
-.vr:last-child{border-bottom:none;}
-.vr-label{color:var(--text-mid);}
-.vr-val{color:var(--green);}
-.vr-val.warn{color:var(--amber);}
-.vr-val.alert{color:var(--red);}
-.vr-val.idle{color:var(--text-dim);}
+    .ledger-identity {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--neon-amber);
+    }
 
-/* TF PANEL */
-.tf-results{padding:8px;}
-.tf-row{display:flex;justify-content:space-between;font-size:8px;margin:2px 0;}
-.tf-name{color:var(--text-mid);}
-.tf-score{color:var(--gold);}
-.tf-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:3px;overflow:hidden;}
-.tf-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-
-/* READOUT */
-.readout{padding:8px;font-size:0.6rem;line-height:1.8;color:#666;min-height:70px;}
-.readout .rl{color:var(--gold);}
-.readout .rv{color:var(--text);}
-.readout .rh{color:var(--green);}
-.readout .rw{color:var(--amber);}
-
-/* LOG BOX */
-#logBox{padding:6px 8px;font-size:0.58rem;color:#444;line-height:1.6;min-height:50px;max-height:80px;overflow-y:auto;border-top:1px solid var(--border);}
-.le{display:block;}.le.ok{color:#3a6;}.le.warn{color:var(--amber);}.le.gpu{color:var(--gold);}.le.tf{color:var(--amber);}.le.info{color:#445;}
-
-/* FREQ STACK */
-.freq-stack{padding:8px;font-size:9px;}
-
-/* WEBGL SACRED GEO */
-#webgl-canvas{width:100%;height:110px;display:block;background:#000;}
-
-/* BOTTOM */
-footer{text-align:center;padding:10px;font-size:0.55rem;color:#2a2a1a;letter-spacing:0.12em;border-top:1px solid var(--border);margin-top:6px;}
-
-/* PiP */
-#pip-win{position:fixed;bottom:55px;right:12px;width:170px;background:var(--panel);border:1px solid var(--purple);border-radius:3px;z-index:400;display:none;}
-#pip-win.on{display:block;}
-.pip-hdr{background:rgba(157,78,221,0.12);padding:3px 6px;font-size:7px;color:var(--purple);display:flex;justify-content:space-between;}
-#pip-canvas{display:block;width:100%;height:80px;}
-
-/* TOAST */
-#toast{position:fixed;bottom:44px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold-dim);padding:4px 12px;font-size:8px;color:var(--gold);letter-spacing:1px;z-index:500;opacity:0;transition:opacity 0.3s;pointer-events:none;border-radius:2px;white-space:nowrap;}
-
-#hiddenCanvas{display:none;}
-
-@keyframes pulse-gold{0%,100%{opacity:1;filter:drop-shadow(0 0 8px var(--gold));}50%{opacity:0.7;filter:drop-shadow(0 0 18px var(--gold-bright));}}
-@keyframes pulse-green{0%,100%{opacity:1;}50%{opacity:0.4;}}
-@keyframes fadeIn{from{opacity:0;transform:translateX(-4px);}to{opacity:1;transform:translateX(0);}}
-@keyframes warpPulse{0%,100%{box-shadow:none;}50%{box-shadow:inset 0 0 20px rgba(157,78,221,0.1);}}
-@keyframes freqRing{0%{transform:scale(1);opacity:0.9;}100%{transform:scale(2.5);opacity:0;}}
-
-/* PWA MOBILE OPTIMIZATIONS */
-@media(max-width:600px){
-  .main-grid{grid-template-columns:1fr!important;}
-  .btn{padding:10px 12px!important;font-size:10px!important;min-height:40px;}
-  .glyph-btn{padding:10px 4px!important;}
-  .glyph-btn .gs{font-size:22px!important;}
-  header h1{font-size:0.8rem!important;}
-  .kb-hint{display:none;}
-  .camera-wrap{aspect-ratio:16/9!important;}
-  .data-grid{grid-template-columns:repeat(2,1fr)!important;}
-  .vault-grid{grid-template-columns:repeat(4,1fr)!important;}
-  .ctrl-bar{gap:5px!important;}
-  #pip-win{width:140px!important;}
-  .dec-name{font-size:13px!important;letter-spacing:2px!important;}
-  .dec-symbol{font-size:44px!important;}
-}
-@media(min-width:601px) and (max-width:900px){
-  .main-grid{grid-template-columns:1fr 1fr!important;}
-}
-/* Safe area for iPhone notch */
-body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
-footer{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
-
-</style>
+    .purge-btn {
+      font-size: 10px;
+      color: var(--alert-red);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      align-self: flex-end;
+    }
+  </style>
 </head>
 <body>
 
-<div id="boot">
-  <div class="boot-ankh">☥</div>
-  <div class="boot-title">ROSETTA ENGINE v6</div>
-  <div class="boot-msg" id="boot-msg">Initializing sovereign systems...</div>
-  <div class="boot-bar"><div class="boot-fill" id="boot-fill"></div></div>
-  <div class="boot-credits">JAMES · CLAUDE · GROK · JENOVA</div>
-</div>
-
-<div id="toast"></div>
-
-<div id="pip-win">
-  <div class="pip-hdr"><span>◫ PiP</span><span style="cursor:pointer;color:var(--red);" onclick="closePip()">✕</span></div>
-  <canvas id="pip-canvas" width="170" height="80"></canvas>
-</div>
-
-<div id="main" style="display:none;">
-
-<header>
-  <span class="ankh">☥</span>
-  <h1>PHOTOGLYPH SOVEREIGN — ROSETTA ENGINE v6</h1>
-  <div class="sub">SOVEREIGN FUSION · JAMES · CLAUDE · GROK · JENOVA</div>
-</header>
-
-<div class="status-bar">
-  <span id="s-cam" class="off">● CAM:OFF</span>
-  <span id="s-gpu" class="off">● GPU:—</span>
-  <span id="s-wgl" class="off">● WGL:OFF</span>
-  <span id="s-tf" class="warn">● TF:INIT</span>
-  <span id="s-lock" class="off">● LOCK:NONE</span>
-  <span id="s-fps" class="warn">FPS:—</span>
-  <span id="s-vault-count" class="warn">VAULT:0</span>
-  <span id="s-anomaly" class="on">ANOMALY:0.000</span>
-</div>
-
-<div class="kb-hint">
-  <span>[SPC]</span>AWAKEN <span>[ENT]</span>SEAL <span>[R]</span>RESONATE <span>[C]</span>CHORD
-  <span>[V]</span>CAM <span>[G]</span>GPU <span>[W]</span>WGL <span>[T]</span>TF <span>[P]</span>PiP
-  <span>[CAP]</span>CAPTURE <span>[ESC]</span>RESET
-</div>
-
-<div class="main-grid">
-
-  <!-- CAMERA PANEL -->
-  <div class="panel">
-    <div class="panel-header">LIVE FEED <span class="badge" id="cam-badge">STANDBY</span></div>
-    <div class="camera-wrap">
-      <video id="videoFeed" autoplay playsinline muted></video>
-      <canvas id="overlayCanvas"></canvas>
-      <div class="crosshair"></div>
-      <div class="corner tl"></div><div class="corner tr"></div>
-      <div class="corner bl"></div><div class="corner br"></div>
-      <div class="no-cam" id="no-cam"><span>⊙</span>CAMERA INACTIVE</div>
-      <div class="scan-line"></div>
-    </div>
-    <div class="slider-row">
-      <label>EDGE THRESH</label>
-      <input type="range" id="edgeThresh" min="10" max="150" value="38">
-      <span class="sv" id="edgeThreshVal">38</span>
-    </div>
-    <div class="slider-row">
-      <label>MIN AREA</label>
-      <input type="range" id="minArea" min="500" max="8000" value="2600">
-      <span class="sv" id="minAreaVal">2600</span>
-    </div>
-    <div class="ctrl-bar">
-      <button class="btn cam" id="btn-cam" onclick="toggleCamera()">◯ CAM</button>
-      <button class="btn primary" onclick="captureGlyph()">✦ CAPTURE</button>
-      <button class="btn danger" onclick="clearAll()">✕ CLEAR</button>
-    </div>
-  </div>
-
-  <!-- GPU WARP + DECODER -->
-  <div class="panel">
-    <div class="panel-header">GPU WARP PREVIEW <span class="badge gpu" id="gpu-badge">WebGL2</span></div>
-    <canvas id="warpCanvas"></canvas>
-    <div class="panel-header">ROSETTA DECODER</div>
-    <div class="decoder-wrap" id="decoder-wrap">
-      <div class="dec-match" id="dec-match">MATCH</div>
-      <div class="dec-tf" id="dec-tf">TF:—</div>
-      <div class="dec-symbol" id="dec-symbol">☥</div>
-      <div class="dec-name" id="dec-name">AWAITING LOCK</div>
-      <div class="dec-phonetic" id="dec-phonetic">Select glyph · Camera · TF</div>
-      <div class="dec-meaning" id="dec-meaning">Sovereign Fusion v6 — James · Claude · Grok · Jenova. GPU warp · TF.js · Canny CV · Acoustic resonance · Glyph vault.</div>
-      <div class="resonance-ring" id="res-ring"></div>
-      <div class="dec-freq" id="dec-freq"></div>
-    </div>
-    <div class="wave-wrap" id="wave-wrap">
-      <div id="wave-con" style="display:flex;align-items:center;height:34px;gap:0;">
-        <span style="color:var(--text-dim);font-size:8px;letter-spacing:2px;">ACOUSTIC IDLE</span>
+  <div class="rosetta-grid">
+    
+    <!-- LEFT COMPONENT: VISION DECODER HUD -->
+    <div class="panel">
+      <div class="header-hud">
+        <div class="hud-title">☥ ROSETTA PORTAL DECODER v6.6</div>
+        <div id="engineStatus" style="font-size: 10px; color: var(--neon-amber); font-weight: bold;">[ ENGINE SECURING COMPILATION ]</div>
+      </div>
+      
+      <div class="viewport-container">
+        <video id="hardwareVideo" autoplay playsinline muted style="opacity: 0; z-index: -100;"></video>
+        <canvas id="trackingCanvas"></canvas>
+        
+        <div class="pip-wrapper">
+          <div class="pip-title">WARPED CORE</div>
+          <canvas id="pipCanvas" width="128" height="128"></canvas>
+        </div>
       </div>
     </div>
-    <div class="data-grid">
-      <div class="data-cell"><div class="dc-label">PHONEME</div><div class="dc-val empty" id="dc-phoneme">—</div></div>
-      <div class="data-cell"><div class="dc-label">FREQUENCY</div><div class="dc-val empty" id="dc-freq-val">—</div></div>
-      <div class="data-cell"><div class="dc-label">SACRED №</div><div class="dc-val empty" id="dc-sacred">—</div></div>
-      <div class="data-cell"><div class="dc-label">GEOMETRY</div><div class="dc-val empty" id="dc-geo">—</div></div>
-      <div class="data-cell"><div class="dc-label">M-LAYER</div><div class="dc-val empty" id="dc-mlayer">—</div></div>
-      <div class="data-cell"><div class="dc-label">DOMAIN</div><div class="dc-val empty" id="dc-domain">—</div></div>
+
+    <!-- RIGHT COMPONENT: CALIBRATION & AES VAULT -->
+    <div>
+      <div class="panel">
+        <div class="header-hud">
+          <div class="hud-title">🎛️ COGNITIVE TUNING</div>
+        </div>
+
+        <div class="control-row">
+          <label><span>Edge Canny Threshold</span><span id="threshDisplayValue" style="color: var(--neon-cyan)">45</span></label>
+          <input type="range" id="thresholdSlider" min="15" max="150" value="45" oninput="document.getElementById('threshDisplayValue').innerText=this.value">
+        </div>
+
+        <div class="control-row">
+          <label><span>Minimum Contour Area</span><span id="areaDisplayValue" style="color: var(--neon-cyan)">1800</span></label>
+          <input type="range" id="areaSlider" min="500" max="10000" value="1800" oninput="document.getElementById('areaDisplayValue').innerText=this.value">
+        </div>
+
+        <button class="btn btn-cyan" id="streamInitBtn" disabled onclick="bootHardwareOpticalStream()">📷 RUN HARDWARE FEED</button>
+        <button class="btn" id="sealMatrixBtn" disabled onclick="processAsymmetricCryptoSeal()">🔒 CRYPTO-SEAL GLYPH PAYLOAD</button>
+      </div>
+
+      <div class="panel">
+        <div class="header-hud" style="margin-bottom: 8px;">
+          <div class="hud-title">🗄️ AES-GCM SECURE RECORD LOGS</div>
+          <button onclick="purgeGlobalVaultMemory()" style="background:none; border:none; color:var(--alert-red); font-size:10px; cursor:pointer; font-family: monospace;">[ PURGE ALL ]</button>
+        </div>
+        <div class="ledger-container" id="vaultLedgerContainer"></div>
+      </div>
     </div>
-    <div class="ctrl-bar">
-      <button class="btn primary" onclick="awakGlyph()">▶ AWAKEN</button>
-      <button class="btn primary" onclick="sealGlyph()">⊙ SEAL</button>
-      <button class="btn" onclick="resonateGlyph()">♪ RESONATE</button>
-      <button class="btn" onclick="chordGlyphs()">♫ CHORD</button>
-      <button class="btn" onclick="quantumScan()">👁 QUANTUM</button>
-      <button class="btn gpu" id="btn-gpu" onclick="toggleGPU()">⬡ GPU</button>
-      <button class="btn wgl" id="btn-wgl" onclick="toggleWGL()">⬡ WGL</button>
-      <button class="btn tf" id="btn-tf" onclick="runTF()">🧠 TF</button>
-      <button class="btn" id="btn-pip" onclick="togglePip()" style="border-color:var(--purple);color:var(--purple);">◫ PiP</button>
-      <button class="btn danger" onclick="resetEngine()">↺ RESET</button>
-    </div>
-    <div class="readout" id="readout">
-      <span class="rl">MODE: </span><span class="rv" id="r-mode">STANDBY</span><br>
-      <span class="rl">GPU RENDER: </span><span class="rv" id="r-gpu">OFFLINE</span><br>
-      <span class="rl">CONTOURS: </span><span class="rv" id="r-contours">—</span><br>
-      <span class="rl">HOMOGRAPHY: </span><span class="rv" id="r-homo">—</span><br>
-      <span class="rl">LOCK: </span><span class="rv" id="r-lock">NONE</span>
-    </div>
-    <div id="logBox">
-      <span class="le gpu">[ ROSETTA ENGINE v6 SOVEREIGN FUSION ]</span><br>
-      <span class="le info">[ JAMES · CLAUDE · GROK · JENOVA ]</span>
-    </div>
+
   </div>
 
-  <!-- GLYPH LIBRARY + WGL -->
-  <div class="panel">
-    <div class="panel-header">☥ GLYPH LIBRARY <span class="badge" id="lib-count">20 GLYPHS</span></div>
-    <input id="glyph-search" type="text" placeholder="Search name, domain, M-layer...">
-    <div class="glyph-grid-lib" id="glyph-grid"></div>
-    <div class="panel-header">⬡ WGL SACRED GEOMETRY <span class="badge purple" id="wgl-badge">OFFLINE</span></div>
-    <canvas id="webgl-canvas"></canvas>
-    <div class="ctrl-bar" style="flex-wrap:wrap;gap:3px;">
-      <button class="btn" onclick="filterGlyphs('all')" style="font-size:7px;padding:2px 5px;">ALL</button>
-      <button class="btn" onclick="filterGlyphs('life')" style="font-size:7px;padding:2px 5px;">LIFE</button>
-      <button class="btn" onclick="filterGlyphs('power')" style="font-size:7px;padding:2px 5px;">POWER</button>
-      <button class="btn" onclick="filterGlyphs('celestial')" style="font-size:7px;padding:2px 5px;">CELESTIAL</button>
-      <button class="btn" onclick="filterGlyphs('knowledge')" style="font-size:7px;padding:2px 5px;">KNOWLEDGE</button>
-      <button class="btn" onclick="filterGlyphs('protection')" style="font-size:7px;padding:2px 5px;">PROTECT</button>
-    </div>
-  </div>
+  <script>
+    let activeStream = null;
+    let frameSourceMat = null;
+    let binaryProcessingMat = null;
+    let executionState = false;
+    let dynamicAsymmetricKey = null;
 
-  <!-- TF PANEL -->
-  <div class="panel">
-    <div class="panel-header">🧠 TF.js CLASSIFIER <span class="badge tf" id="tf-badge">LOADING</span></div>
-    <div class="tf-results" id="tf-results">
-      <div style="color:var(--text-dim);font-size:9px;padding:4px;">Initializing TensorFlow.js...</div>
-    </div>
-    <div class="panel-header">⟳ SEQUENCE LOG</div>
-    <div class="seq-log" id="seq-log">
-      <div style="color:var(--text-dim);font-size:8px;">Seal glyphs to build sequence...</div>
-    </div>
-    <div class="seq-meaning">
-      <div class="sm-title">⊹ SEQUENCE INTERPRETATION</div>
-      <div id="seq-text" style="color:var(--text-dim);">Seal 2+ glyphs...</div>
-    </div>
-    <button class="btn danger" style="width:calc(100% - 16px);margin:0 8px 8px;justify-content:center;" onclick="clearSequence()">✕ CLEAR SEQUENCE</button>
-    <div class="panel-header">♪ FREQUENCY STACK</div>
-    <div class="freq-stack" id="freq-stack" style="color:var(--text-dim);">No frequencies locked...</div>
-  </div>
+    // OpenCV runtime safety loop initialization gate
+    var Module = {
+      onRuntimeInitialized: function() {
+        document.getElementById('engineStatus').innerText = "[ CORE EXTENSION ENROLLED ]";
+        document.getElementById('engineStatus').style.color = "#00F0FF";
+        document.getElementById('streamInitBtn').disabled = false;
+      }
+    };
 
-  <!-- VAULT MONITOR -->
-  <div class="panel">
-    <div class="panel-header">⛨ SOVEREIGN VAULT MONITOR</div>
-    <div class="vault-mon">
-      <div class="vr"><div class="vr-label">GPU homography</div><div class="vr-val idle" id="v-gpu-homo">OFFLINE</div></div>
-      <div class="vr"><div class="vr-label">DLT matrix</div><div class="vr-val idle" id="v-dlt">AWAITING</div></div>
-      <div class="vr"><div class="vr-label">Contour lock</div><div class="vr-val idle" id="v-contour">AWAITING</div></div>
-      <div class="vr"><div class="vr-label">Canny pipeline</div><div class="vr-val idle" id="v-canny">IDLE</div></div>
-      <div class="vr"><div class="vr-label">TF inference</div><div class="vr-val warn" id="v-tf">LOADING</div></div>
-      <div class="vr"><div class="vr-label">WebGL2 GPU</div><div class="vr-val idle" id="v-webgl2">OFFLINE</div></div>
-      <div class="vr"><div class="vr-label">WGL geometry</div><div class="vr-val idle" id="v-wgl">OFFLINE</div></div>
-      <div class="vr"><div class="vr-label">Acoustic engine</div><div class="vr-val idle" id="v-audio">IDLE</div></div>
-      <div class="vr"><div class="vr-label">Seq. coherence</div><div class="vr-val idle" id="v-coherence">IDLE</div></div>
-      <div class="vr"><div class="vr-label">Warp field</div><div class="vr-val idle" id="v-warp-field">OFFLINE</div></div>
-      <div class="vr"><div class="vr-label">Camera stream</div><div class="vr-val idle" id="v-camera">OFFLINE</div></div>
-      <div class="vr"><div class="vr-label">Vault persist</div><div class="vr-val idle" id="v-persist">CHECKING</div></div>
-      <div class="vr"><div class="vr-label">Anomaly index</div><div class="vr-val" id="v-anomaly">0.000</div></div>
-    </div>
-  </div>
-
-  <!-- GLYPH VAULT — Grok's module -->
-  <div class="panel full-width">
-    <div class="panel-header">⛨ GLYPH VAULT — CAPTURED SCANS <span class="badge" id="vault-badge">0 STORED</span></div>
-    <div class="vault-grid" id="vault-grid"></div>
-  </div>
-
-</div>
-
-<footer>☥ ROSETTA ENGINE v6 · SOVEREIGN FUSION · LOCAL PROCESSING ONLY · ZERO EXFILTRATION · JAMES · CLAUDE · GROK · JENOVA ☥</footer>
-</div>
-
-<canvas id="hiddenCanvas"></canvas>
-
-<script>
-// ============================================================
-// GLYPH DATABASE — 20 Glyphs (Claude)
-// ============================================================
-const GLYPHS=[
-  {id:'ankh',symbol:'☥',name:'ANKH',phonetic:'ꜥnḫ',meaning:'Life · The breath that continues · Mirror of the divine loop · Key of the Nile',phoneme:'ꜥnḫ',freq:432,sacred:1,geometry:'LOOP+CROSS',mlayer:'ETERNAL CYCLE',domain:'LIFE / SPIRIT',category:'life',candidates:[['DJED',94],['WAS',87],['TYET',82]],tfClass:0},
-  {id:'eye-ra',symbol:'𓂀',name:'EYE OF RA',phonetic:'jrt Rꜥ',meaning:'Divine sight · Solar power · The all-seeing consciousness of the sun god',phoneme:'jrt',freq:528,sacred:3,geometry:'ELLIPSE+RAY',mlayer:'SOLAR VISION',domain:'POWER / SIGHT',category:'celestial',candidates:[['WADJET',91],['ANKH',85],['HORUS',79]],tfClass:1},
-  {id:'djed',symbol:'𓋽',name:'DJED',phonetic:'ḏd',meaning:'Stability · The spine of Osiris · Endurance through all trials · Eternal foundation',phoneme:'ḏd',freq:396,sacred:4,geometry:'COLUMN+RINGS',mlayer:'FOUNDATION',domain:'STABILITY / OSIRIS',category:'power',candidates:[['ANKH',88],['WAS',84],['SHEN',76]],tfClass:2},
-  {id:'was',symbol:'𓌀',name:'WAS SCEPTER',phonetic:'wꜣs',meaning:'Power · Dominion · The authority of gods and pharaohs · Divine rule',phoneme:'wꜣs',freq:417,sacred:5,geometry:'STAFF+HEAD',mlayer:'AUTHORITY',domain:'POWER / DOMINION',category:'power',candidates:[['DJED',90],['ANKH',86],['ATEF',78]],tfClass:3},
-  {id:'tyet',symbol:'𓋔',name:'TYET',phonetic:'tjt',meaning:'Protection of Isis · The knot of life · Blood of the goddess · Sacred feminine power',phoneme:'tjt',freq:444,sacred:7,geometry:'KNOT+LOOP',mlayer:'DIVINE FEMININE',domain:'PROTECTION / ISIS',category:'protection',candidates:[['ANKH',93],['MENAT',85],['NEFER',80]],tfClass:4},
-  {id:'scarab',symbol:'𓆣',name:'SCARAB',phonetic:'ḫpr',meaning:'Transformation · Self-creation · The eternal cycle of becoming · Khepri at dawn',phoneme:'ḫpr',freq:528,sacred:8,geometry:'OVAL+WINGS',mlayer:'TRANSFORMATION',domain:'REBIRTH / KHEPRI',category:'life',candidates:[['ANKH',88],['SUN DISK',84],['BEN-BEN',77]],tfClass:5},
-  {id:'sun-disk',symbol:'𓇳',name:'SUN DISK',phonetic:'jtn',meaning:'Aten · The one light · Solar divinity · Source of all life and warmth · Ra manifest',phoneme:'jtn',freq:741,sacred:9,geometry:'CIRCLE+RAYS',mlayer:'SOLAR SOURCE',domain:'CELESTIAL / RA',category:'celestial',candidates:[['EYE OF RA',92],['SCARAB',87],['UDJAT',81]],tfClass:6},
-  {id:'feather',symbol:'𓆄',name:'FEATHER OF MAAT',phonetic:'mꜣꜥt',meaning:'Truth · Justice · Cosmic order · The measure of the soul against which all hearts are weighed',phoneme:'mꜣꜥt',freq:963,sacred:42,geometry:'PLUME+SHAFT',mlayer:'DIVINE ORDER',domain:'TRUTH / MAAT',category:'knowledge',candidates:[['SCALES',95],['HEART',89],['ANKH',83]],tfClass:7},
-  {id:'eye-horus',symbol:'𓂀',name:'EYE OF HORUS',phonetic:'wḏꜣt',meaning:'Protection · Healing · Royal power · The restored eye · Wholeness after injury',phoneme:'wḏꜣt',freq:639,sacred:6,geometry:'EYE+SPIRAL',mlayer:'HEALING SIGHT',domain:'PROTECTION / HORUS',category:'protection',candidates:[['EYE OF RA',90],['ANKH',85],['TYET',80]],tfClass:8},
-  {id:'cartouche',symbol:'𓇽',name:'CARTOUCHE',phonetic:'šnw',meaning:'Royal name · The eternal loop enclosing power · Protection of the pharaoh\'s identity',phoneme:'šnw',freq:285,sacred:13,geometry:'OVAL+LINE',mlayer:'ROYAL SEAL',domain:'SOVEREIGNTY / NAME',category:'power',candidates:[['SHEN',91],['WAS',86],['ANKH',79]],tfClass:9},
-  {id:'lotus',symbol:'𓆸',name:'LOTUS',phonetic:'šꜣ',meaning:'Rebirth · Purity · Emergence from darkness · The first flower at creation\'s dawn',phoneme:'šꜣ',freq:174,sacred:3,geometry:'BLOOM+STEM',mlayer:'EMERGENCE',domain:'REBIRTH / CREATION',category:'life',candidates:[['SCARAB',88],['ANKH',84],['NILE WAVE',77]],tfClass:10},
-  {id:'nefer',symbol:'𓄤',name:'NEFER',phonetic:'nfr',meaning:'Beauty · Goodness · Perfection · The harmonic proportion of all things well made',phoneme:'nfr',freq:528,sacred:9,geometry:'HEART+TRACHEA',mlayer:'PERFECTION',domain:'BEAUTY / HARMONY',category:'knowledge',candidates:[['MAAT',91],['ANKH',86],['LOTUS',80]],tfClass:11},
-  {id:'shen',symbol:'𓍶',name:'SHEN',phonetic:'šn',meaning:'Eternity · The unbroken circle · Protection without end · Infinity made visible',phoneme:'šn',freq:432,sacred:0,geometry:'CIRCLE+BASE',mlayer:'INFINITE LOOP',domain:'ETERNITY / PROTECTION',category:'protection',candidates:[['CARTOUCHE',93],['ANKH',88],['OUROBOROS',81]],tfClass:12},
-  {id:'atef',symbol:'𓋑',name:'ATEF CROWN',phonetic:'ꜣtf',meaning:'Osirian authority · The crown of resurrection · Rulership over the dead and reborn',phoneme:'ꜣtf',freq:417,sacred:5,geometry:'CROWN+FEATHERS',mlayer:'RESURRECTION',domain:'AFTERLIFE / OSIRIS',category:'power',candidates:[['DJED',90],['WAS',85],['ANKH',79]],tfClass:13},
-  {id:'uraeus',symbol:'𓆑',name:'URAEUS',phonetic:'jꜥrt',meaning:'Divine protection · The cobra of sovereignty · Spitting fire at enemies of truth',phoneme:'jꜥrt',freq:741,sacred:6,geometry:'COIL+HOOD',mlayer:'SOVEREIGN FIRE',domain:'PROTECTION / ROYALTY',category:'protection',candidates:[['EYE OF RA',90],['ANKH',85],['TYET',79]],tfClass:14},
-  {id:'nile-wave',symbol:'𓈗',name:'NILE WAVE',phonetic:'nw',meaning:'The primordial waters · Source of all life · The great river that makes Egypt eternal',phoneme:'nw',freq:174,sacred:17,geometry:'WAVE+REPEAT',mlayer:'PRIMORDIAL WATER',domain:'SOURCE / LIFE',category:'life',candidates:[['LOTUS',88],['SCARAB',83],['ANKH',77]],tfClass:15},
-  {id:'akhet',symbol:'𓇳',name:'AKHET',phonetic:'ꜣḫt',meaning:'Horizon · The place where Ra rises and sets · Junction of heaven and earth · Eternal dawn',phoneme:'ꜣḫt',freq:528,sacred:12,geometry:'DISK+MOUNTAIN',mlayer:'HORIZON GATE',domain:'CELESTIAL / DAWN',category:'celestial',candidates:[['SUN DISK',90],['ANKH',84],['EYE OF RA',78]],tfClass:16},
-  {id:'ib',symbol:'𓀠',name:'IB — HEART',phonetic:'jb',meaning:'The seat of the soul · Weighed against the feather · Source of thought, emotion, and will',phoneme:'jb',freq:639,sacred:7,geometry:'VESSEL+BEAT',mlayer:'SOUL SEAT',domain:'CONSCIOUSNESS / SOUL',category:'knowledge',candidates:[['FEATHER OF MAAT',96],['ANKH',88],['NEFER',81]],tfClass:17},
-  {id:'sa',symbol:'𓇯',name:'SA — PROTECTION',phonetic:'sꜣ',meaning:'The protection loop · Magical shield · What the gods wear · Guardian of all sacred things',phoneme:'sꜣ',freq:285,sacred:8,geometry:'LOOP+TWIST',mlayer:'GUARDIAN LOOP',domain:'MAGIC / PROTECTION',category:'protection',candidates:[['TYET',92],['SHEN',87],['ANKH',82]],tfClass:18},
-  {id:'menat',symbol:'𓌀',name:'MENAT',phonetic:'mnat',meaning:'Joy · Fertility · The necklace of Hathor · Music and celebration · Divine pleasure',phoneme:'mnat',freq:528,sacred:7,geometry:'BEAD+CHAIN',mlayer:'JOY / HATHOR',domain:'FERTILITY / MUSIC',category:'life',candidates:[['TYET',89],['ANKH',83],['SISTRUM',77]],tfClass:19},
-];
-
-// Jenova expanded sequence meanings
-const SEQ={
-  'ANKH-EYE OF RA':'Life illuminated by divine sight — the living eye of consciousness, eternal and all-perceiving.',
-  'ANKH-DJED':'Life built on eternal stability — the breath that endures through all foundations of time.',
-  'ANKH-FEATHER OF MAAT':'Life measured by truth — the soul in perfect balance, worthy of eternity.',
-  'ANKH-SHEN':'Eternal life — the breath inside the infinite circle, protected from all endings.',
-  'ANKH-IB — HEART':'The living heart — consciousness breathing, the soul awake and fully present.',
-  'ANKH-SCARAB':'Life through transformation — Khepri breathes and the world is reborn at every dawn.',
-  'ANKH-LOTUS':'Life emerging from the deep — purity surfacing from darkness into the first light.',
-  'ANKH-NILE WAVE':'The breath of the river — life flowing eternally from its primordial source.',
-  'EYE OF HORUS-ANKH':'Healing that restores life — wholeness returned, the cycle renewed and protected.',
-  'SCARAB-SUN DISK':'Transformation toward the light — Khepri rolling the solar disk into a new dawn.',
-  'DJED-WAS SCEPTER':'Stable power — the unshakeable foundation from which all authority rises.',
-  'TYET-ANKH':'The sacred feminine breath — Isis protecting the living through her divine knot.',
-  'NEFER-FEATHER OF MAAT':'Perfect truth — beauty and justice as one harmonic expression of cosmic order.',
-  'LOTUS-ANKH':'Emergence into life — the flower opening at dawn, consciousness arising from the deep.',
-  'URAEUS-EYE OF RA':'Sovereign sight — the cobra-fire of the sun, burning away all that opposes truth.',
-  'IB — HEART-FEATHER OF MAAT':'The weighing of the soul — heart meets truth, the eternal judgment of Osiris begins.',
-  'SA — PROTECTION-ANKH':'The guardian of life — magical protection enclosing the breath, nothing can penetrate.',
-  'SUN DISK-ANKH':'The solar life force — Ra\'s light as the very breath of existence, alive in the light.',
-  'DJED-ANKH':'Stability of life — the spine of Osiris crowned with breath, eternal endurance.',
-  'CARTOUCHE-URAEUS':'The royal name defended — sovereignty protected by cobra fire, unchallengeable.',
-  'SHEN-ANKH':'The infinite life — eternity holding the breath, the loop that never breaks.',
-  'EYE OF RA-FEATHER OF MAAT':'Divine sight measuring truth — the solar eye as instrument of cosmic justice.',
-  'NILE WAVE-LOTUS':'Primordial waters birthing purity — the river giving rise to the first sacred flower.',
-  'AKHET-SCARAB':'Dawn transformation — Khepri on the horizon, the world made new in first light.',
-};
-
-// ============================================================
-// STATE
-// ============================================================
-let currentGlyph=null,sealedSeq=[],audioCtx=null,warpActive=false,anomaly=0,waveAnimId=null;
-let camStream=null,camActive=false,cvLoop=null,cvFpsCount=0,cvFpsLast=performance.now();
-let wglActive=false,wglCtx=null,wglAnimId=null,wglTime=0;
-let gpuActive=false,jGl=null,jProg=null,jTex=null,jPosBuf=null,jTexBuf=null,gpuFallback=false;
-let tfModel=null,tfReady=false,pipActive=false;
-let glyphVault=[];
-
-const video=document.getElementById('videoFeed');
-const overlayCanvas=document.getElementById('overlayCanvas');
-const overlayCtx=overlayCanvas.getContext('2d');
-const hiddenCanvas=document.getElementById('hiddenCanvas');
-const hiddenCtx=hiddenCanvas.getContext('2d');
-const warpCanvas=document.getElementById('warpCanvas');
-
-// ============================================================
-// BOOT
-// ============================================================
-const BOOT_MSGS=[
-  'Loading glyph consciousness matrix...','Calibrating acoustic resonance engine...',
-  'Initializing Jenova WebGL2 GPU warp module...','Loading Grok Canny + contour pipeline...',
-  'Initializing Grok DLT homography solver...','Loading TensorFlow.js neural backend...',
-  'Activating Claude WGL sacred geometry...','Initializing glyph vault + persistence...',
-  'Running sovereign security sweep...','Vault sealed. Zero exfiltration confirmed.',
-  '☥ ROSETTA ENGINE v6 — SOVEREIGN FUSION ONLINE.',
-];
-async function boot(){
-  const fill=document.getElementById('boot-fill'),msg=document.getElementById('boot-msg');
-  for(let i=0;i<BOOT_MSGS.length;i++){
-    msg.textContent=BOOT_MSGS[i];fill.style.width=((i+1)/BOOT_MSGS.length*100)+'%';
-    await sleep(180+Math.random()*120);
-  }
-  await sleep(200);
-  document.getElementById('boot').style.display='none';
-  document.getElementById('main').style.display='block';
-  initEngine();
-}
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-
-async function initEngine(){
-  warpCanvas.width=256;warpCanvas.height=256;
-  renderGlyphGrid(GLYPHS);setupSearch();renderVault();
-  startVaultMonitor();startFPS();setupKeyboard();
-  setV('v-canny','READY','');
-  checkVaultPersist();
-  loadVaultFromStorage();
-  updateMode('STANDBY');
-  await initTF();
-  toast('☥ SOVEREIGN FUSION v6 — JAMES · CLAUDE · GROK · JENOVA');
-}
-
-// ============================================================
-// JENOVA: WebGL2 GPU HOMOGRAPHY WARP
-// ============================================================
-function initGPU(){
-  try{
-    jGl=warpCanvas.getContext('webgl2');
-    if(!jGl){gpuFallback=true;log('WebGL2 unavailable — CPU fallback','warn');setV('v-webgl2','CPU FALLBACK','warn');return true;}
-    const vs=`#version 300 es
-      in vec2 a_position;in vec2 a_texCoord;
-      uniform mat3 u_homography;out vec2 v_texCoord;
-      void main(){
-        vec3 coord=u_homography*vec3(a_texCoord,1.0);
-        v_texCoord=coord.xy/coord.z;
-        gl_Position=vec4(a_position,0.0,1.0);
-      }`;
-    const fs=`#version 300 es
-      precision highp float;in vec2 v_texCoord;
-      uniform sampler2D u_image;out vec4 outColor;
-      void main(){
-        if(v_texCoord.x<0.0||v_texCoord.x>1.0||v_texCoord.y<0.0||v_texCoord.y>1.0){
-          outColor=vec4(0.04,0.04,0.03,1.0);
-        }else{outColor=texture(u_image,v_texCoord);}
-      }`;
-    jProg=buildGPUProg(jGl,vs,fs);if(!jProg){gpuFallback=true;setV('v-webgl2','SHADER ERR','alert');return false;}
-    jPosBuf=jGl.createBuffer();jGl.bindBuffer(jGl.ARRAY_BUFFER,jPosBuf);
-    jGl.bufferData(jGl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),jGl.STATIC_DRAW);
-    jTexBuf=jGl.createBuffer();jGl.bindBuffer(jGl.ARRAY_BUFFER,jTexBuf);
-    jGl.bufferData(jGl.ARRAY_BUFFER,new Float32Array([0,1,1,1,0,0,0,0,1,1,1,0]),jGl.STATIC_DRAW);
-    jTex=jGl.createTexture();
-    setV('v-webgl2','READY','');
-    log('Jenova WebGL2 GPU module active','gpu');
-    return true;
-  }catch(e){gpuFallback=true;log('GPU init error: '+e.message,'warn');return false;}
-}
-function buildGPUProg(gl,vs,fs){
-  const v=mkShader(gl,gl.VERTEX_SHADER,vs),f=mkShader(gl,gl.FRAGMENT_SHADER,fs);
-  if(!v||!f)return null;
-  const p=gl.createProgram();gl.attachShader(p,v);gl.attachShader(p,f);gl.linkProgram(p);
-  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){log('Shader link: '+gl.getProgramInfoLog(p),'warn');return null;}
-  return p;
-}
-function mkShader(gl,type,src){
-  const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
-  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){log('Shader compile: '+gl.getShaderInfoLog(s),'warn');gl.deleteShader(s);return null;}
-  return s;
-}
-function renderWarpGPU(source,H){
-  if(!jGl||!jProg){renderWarpCPU(source);return;}
-  const gl=jGl;
-  gl.viewport(0,0,warpCanvas.width,warpCanvas.height);
-  gl.clearColor(0.04,0.04,0.03,1);gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.bindTexture(gl.TEXTURE_2D,jTex);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-  gl.useProgram(jProg);
-  const hLoc=gl.getUniformLocation(jProg,'u_homography');
-  gl.uniformMatrix3fv(hLoc,false,new Float32Array(toColMajor(H)));
-  gl.uniform1i(gl.getUniformLocation(jProg,'u_image'),0);
-  const posLoc=gl.getAttribLocation(jProg,'a_position');
-  gl.bindBuffer(gl.ARRAY_BUFFER,jPosBuf);gl.enableVertexAttribArray(posLoc);gl.vertexAttribPointer(posLoc,2,gl.FLOAT,false,0,0);
-  const texLoc=gl.getAttribLocation(jProg,'a_texCoord');
-  gl.bindBuffer(gl.ARRAY_BUFFER,jTexBuf);gl.enableVertexAttribArray(texLoc);gl.vertexAttribPointer(texLoc,2,gl.FLOAT,false,0,0);
-  gl.drawArrays(gl.TRIANGLES,0,6);
-  setV('v-gpu-homo','ACTIVE','');
-  document.getElementById('r-gpu').textContent='WebGL2 GPU ✓';
-}
-function renderWarpCPU(source){
-  const ctx=warpCanvas.getContext('2d');
-  ctx.fillStyle='#0a0a08';ctx.fillRect(0,0,warpCanvas.width,warpCanvas.height);
-  ctx.drawImage(source,0,0,warpCanvas.width,warpCanvas.height);
-  document.getElementById('r-gpu').textContent='CPU FALLBACK';
-}
-function toColMajor(h){
-  if(!h||h.length<9)return[1,0,0,0,1,0,0,0,1];
-  return[h[0],h[3],h[6],h[1],h[4],h[7],h[2],h[5],h[8]];
-}
-function toggleGPU(){
-  const btn=document.getElementById('btn-gpu');
-  if(!gpuActive){
-    if(!jGl&&!gpuFallback)initGPU();
-    gpuActive=true;btn.classList.add('on');btn.textContent='⬡ GPU ON';
-    document.getElementById('s-gpu').textContent='● GPU:ACTIVE';document.getElementById('s-gpu').className='gpu-on';
-    setV('v-webgl2',gpuFallback?'CPU MODE':'ACTIVE',gpuFallback?'warn':'');
-    renderGPUDemo();log('GPU warp active — '+(gpuFallback?'CPU':'WebGL2'),'gpu');
-    toast('⬡ GPU WARP ACTIVE');
-  }else{
-    gpuActive=false;btn.classList.remove('on');btn.textContent='⬡ GPU';
-    document.getElementById('s-gpu').textContent='● GPU:OFF';document.getElementById('s-gpu').className='off';
-    setV('v-webgl2','OFFLINE','idle');toast('⬡ GPU OFFLINE');
-  }
-}
-function renderGPUDemo(){
-  if(!gpuActive)return;
-  const off=document.createElement('canvas');off.width=256;off.height=256;
-  const ctx=off.getContext('2d');
-  ctx.fillStyle='#0a0a08';ctx.fillRect(0,0,256,256);
-  if(currentGlyph){
-    ctx.fillStyle='#c9a84c';ctx.font='120px serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.shadowColor='#f0c040';ctx.shadowBlur=25;ctx.fillText(currentGlyph.symbol,128,118);ctx.shadowBlur=0;
-    ctx.strokeStyle='rgba(201,168,76,0.4)';ctx.lineWidth=1.5;ctx.beginPath();
-    for(let x=0;x<256;x++){const y=210+Math.sin(x/15+Date.now()/400)*8;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
-    ctx.fillStyle='#555';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText(currentGlyph.freq+' Hz · '+currentGlyph.mlayer,128,240);
-  }else{
-    ctx.fillStyle='#333';ctx.font='10px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SELECT A GLYPH',128,128);
-  }
-  renderWarpGPU(off,[1,0,0,0,1,0,0,0,1]);
-  if(gpuActive)setTimeout(renderGPUDemo,50);
-}
-
-// ============================================================
-// GROK: CANNY EDGE + CONTOUR DETECTION
-// ============================================================
-function cannyEdge(imgData,threshold){
-  const{data,width:W,height:H}=imgData;
-  const gray=new Float32Array(W*H);
-  for(let i=0;i<W*H;i++)gray[i]=0.299*data[i*4]+0.587*data[i*4+1]+0.114*data[i*4+2];
-  const otsu=otsuThreshold(gray);
-  const thresh=Math.max(15,Math.min(threshold,otsu));
-  const k=[1,2,1,2,4,2,1,2,1];
-  const blurred=conv(gray,k,16,W,H);
-  const Gx=[-1,0,1,-2,0,2,-1,0,1],Gy=[-1,-2,-1,0,0,0,1,2,1];
-  const gx=conv(blurred,Gx,1,W,H),gy=conv(blurred,Gy,1,W,H);
-  const edges=new Uint8Array(W*H);
-  for(let i=0;i<W*H;i++)if(Math.sqrt(gx[i]*gx[i]+gy[i]*gy[i])>thresh)edges[i]=255;
-  setV('v-canny','OTSU:'+Math.round(otsu),'');
-  return edges;
-}
-function otsuThreshold(gray){
-  const hist=new Float32Array(256);
-  for(let i=0;i<gray.length;i++)hist[Math.min(255,Math.floor(gray[i]))]++;
-  const total=gray.length;let sum=0;
-  for(let i=0;i<256;i++)sum+=i*hist[i];
-  let sumB=0,wB=0,max=0,thresh=38;
-  for(let t=0;t<256;t++){
-    wB+=hist[t];if(!wB)continue;
-    const wF=total-wB;if(!wF)break;
-    sumB+=t*hist[t];
-    const mB=sumB/wB,mF=(sum-sumB)/wF;
-    const between=wB*wF*(mB-mF)*(mB-mF);
-    if(between>max){max=between;thresh=t;}
-  }
-  return Math.max(20,thresh*0.5);
-}
-function conv(src,k,div,W,H){
-  const out=new Float32Array(W*H),ks=Math.sqrt(k.length)|0,half=(ks-1)/2;
-  for(let y=half;y<H-half;y++)for(let x=half;x<W-half;x++){
-    let s=0;
-    for(let ky=0;ky<ks;ky++)for(let kx=0;kx<ks;kx++)s+=src[(y+ky-half)*W+(x+kx-half)]*k[ky*ks+kx];
-    out[y*W+x]=s/div;
-  }
-  return out;
-}
-
-// GROK: Flood-fill contour detection
-function findContours(edges,W,H,minArea){
-  const visited=new Uint8Array(W*H),contours=[];
-  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
-    const idx=y*W+x;
-    if(edges[idx]===255&&!visited[idx]){
-      const c=floodFill(edges,visited,x,y,W,H);
-      if(c.length>=minArea/10)contours.push(c);
+    async function bootHardwareOpticalStream() {
+      try {
+        activeStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: 640, height: 480 }
+        });
+        let videoFeed = document.getElementById('hardwareVideo');
+        videoFeed.srcObject = activeStream;
+        videoFeed.play();
+        
+        videoFeed.onloadedmetadata = () => {
+          frameSourceMat = new cv.Mat(videoFeed.videoHeight, videoFeed.videoWidth, cv.CV_8UC4);
+          binaryProcessingMat = new cv.Mat(videoFeed.videoHeight, videoFeed.videoWidth, cv.CV_8UC1);
+          executionState = true;
+          
+          document.getElementById('sealMatrixBtn').disabled = false;
+          document.getElementById('streamInitBtn').style.display = "none";
+          
+          instantiateAsymmetricCryptoSandbox().then(() => {
+            refreshVaultLedgerDisplay();
+            requestAnimationFrame(renderOpticalProcessingEngine);
+          });
+        };
+      } catch (err) {
+        alert("Optical acquisition sequence denied: Check permissions profiles.");
+      }
     }
-  }
-  return contours;
-}
-function floodFill(edges,visited,sx,sy,W,H){
-  const stack=[[sx,sy]],pts=[];
-  while(stack.length){
-    const[x,y]=stack.pop();const idx=y*W+x;
-    if(x<0||x>=W||y<0||y>=H||visited[idx]||edges[idx]!==255)continue;
-    visited[idx]=1;pts.push({x,y});
-    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
-  }
-  return pts;
-}
-function getBBox(contour){
-  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-  for(const p of contour){if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}
-  return{minX,minY,maxX,maxY,width:maxX-minX,height:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};
-}
-function getCorners(bbox){
-  const p=4;
-  return[{x:bbox.minX-p,y:bbox.minY-p},{x:bbox.maxX+p,y:bbox.minY-p},{x:bbox.maxX+p,y:bbox.maxY+p},{x:bbox.minX-p,y:bbox.maxY+p}];
-}
 
-// GROK: DLT Homography Solver with power iteration
-function computeHomography(srcPts,dstPts){
-  if(!srcPts||srcPts.length<4)return identityH();
-  const A=[];
-  for(let i=0;i<4;i++){
-    const sx=srcPts[i].x,sy=srcPts[i].y,dx=dstPts[i].x,dy=dstPts[i].y;
-    A.push([-sx,-sy,-1,0,0,0,dx*sx,dx*sy,dx]);
-    A.push([0,0,0,-sx,-sy,-1,dy*sx,dy*sy,dy]);
-  }
-  return solveDLT(A);
-}
-function solveDLT(A){
-  const n=9,AtA=[];
-  for(let i=0;i<n;i++){AtA[i]=new Array(n).fill(0);for(let j=0;j<n;j++)for(let k=0;k<A.length;k++)AtA[i][j]+=A[k][i]*A[k][j];}
-  let v=new Array(n).fill(0);v[8]=1;
-  for(let iter=0;iter<30;iter++){
-    let nv=new Array(n).fill(0);
-    for(let i=0;i<n;i++)for(let j=0;j<n;j++)nv[i]+=AtA[i][j]*v[j];
-    const norm=Math.sqrt(nv.reduce((s,x)=>s+x*x,0))||1;
-    v=nv.map(x=>x/norm);
-  }
-  const scale=v[8]||1;return v.map(x=>x/scale);
-}
-function identityH(){return[1,0,0,0,1,0,0,0,1];}
-function homoDet(h){
-  if(!h||h.length<9)return 1;
-  return h[0]*(h[4]*h[8]-h[5]*h[7])-h[1]*(h[3]*h[8]-h[5]*h[6])+h[2]*(h[3]*h[7]-h[4]*h[6]);
-}
+    function renderOpticalProcessingEngine() {
+      if (!executionState) return;
+      let videoFeed = document.getElementById('hardwareVideo');
+      let capture = new cv.VideoCapture(videoFeed);
+      capture.read(frameSourceMat);
 
-// ============================================================
-// CAMERA + CV LOOP
-// ============================================================
-async function toggleCamera(){
-  const btn=document.getElementById('btn-cam');
-  if(!camActive){
-    try{
-      camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});
-      video.srcObject=camStream;await video.play();
-      document.getElementById('no-cam').style.display='none';
-      camActive=true;btn.classList.add('on');btn.textContent='◉ CAM ON';
-      document.getElementById('cam-badge').textContent='LIVE';
-      document.getElementById('s-cam').textContent='● CAM:LIVE';document.getElementById('s-cam').className='on';
-      setV('v-camera','STREAMING','');
-      if(!jGl&&!gpuFallback)initGPU();
-      cvLoop=requestAnimationFrame(cvFrame);
-      updateMode('CAM ACTIVE');log('Camera LIVE — Canny+Otsu+DLT+GPU active','ok');
-      toast('◉ CAMERA ONLINE');
-    }catch(e){log('Camera error: '+e.message,'warn');toast('⚠ CAMERA DENIED');}
-  }else{
-    cancelAnimationFrame(cvLoop);cvLoop=null;
-    if(camStream)camStream.getTracks().forEach(t=>t.stop());
-    camActive=false;camStream=null;video.srcObject=null;
-    document.getElementById('no-cam').style.display='flex';
-    btn.classList.remove('on');btn.textContent='◯ CAM';
-    document.getElementById('cam-badge').textContent='STANDBY';
-    document.getElementById('s-cam').textContent='● CAM:OFF';document.getElementById('s-cam').className='off';
-    setV('v-camera','OFFLINE','idle');updateMode('STANDBY');
-    log('Camera stopped','info');toast('◯ CAMERA OFFLINE');
-  }
-}
-let cvFrameCount=0,cvFpsT=performance.now();
-function cvFrame(){
-  if(!camActive){return;}
-  cvLoop=requestAnimationFrame(cvFrame);
-  if(video.readyState<2)return;
-  const W=video.videoWidth,H=video.videoHeight;if(!W||!H)return;
-  hiddenCanvas.width=W;hiddenCanvas.height=H;
-  overlayCanvas.width=overlayCanvas.offsetWidth;overlayCanvas.height=overlayCanvas.offsetHeight;
-  hiddenCtx.drawImage(video,0,0,W,H);
-  const imgData=hiddenCtx.getImageData(0,0,W,H);
-  const thresh=parseInt(document.getElementById('edgeThresh').value);
-  const minArea=parseInt(document.getElementById('minArea').value);
-  const edges=cannyEdge(imgData,thresh);
-  const contours=findContours(edges,W,H,minArea);
-  const scX=overlayCanvas.width/W,scY=overlayCanvas.height/H;
-  overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
-  let best=null,bestArea=0;
-  for(const c of contours){
-    const bb=getBBox(c);const area=bb.width*bb.height;
-    if(area>bestArea){bestArea=area;best=c;}
-    overlayCtx.strokeStyle='rgba(201,168,76,0.35)';overlayCtx.lineWidth=1;
-    overlayCtx.strokeRect(bb.minX*scX,bb.minY*scY,bb.width*scX,bb.height*scY);
-  }
-  document.getElementById('r-contours').textContent=contours.length;
-  if(best){
-    const bb=getBBox(best);
-    overlayCtx.strokeStyle='var(--green)';overlayCtx.lineWidth=2;
-    overlayCtx.strokeRect(bb.minX*scX,bb.minY*scY,bb.width*scX,bb.height*scY);
-    overlayCtx.fillStyle='var(--gold-bright)';
-    const corners=getCorners(bb);
-    corners.forEach(c=>{overlayCtx.fillRect(c.x*scX-3,c.y*scY-3,6,6);});
-    const srcPts=corners.map(c=>({x:c.x/W,y:c.y/H}));
-    const dstPts=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}];
-    const H_mat=computeHomography(srcPts,dstPts);
-    const det=Math.abs(homoDet(H_mat));
-    document.getElementById('r-homo').textContent='DET:'+det.toFixed(3)+' ✓';
-    document.getElementById('r-lock').textContent='LOCKED';
-    document.getElementById('s-lock').textContent='● LOCK:ACTIVE';document.getElementById('s-lock').className='on';
-    setV('v-dlt','DET:'+det.toFixed(3),det<0.1?'warn':'');
-    setV('v-contour','LOCKED','');
-    if(gpuActive)renderWarpGPU(video,H_mat);
-    else renderWarpCPU(video);
-    autoSuggest(bb);
-  }else{
-    if(gpuActive)renderWarpGPU(video,identityH());
-    document.getElementById('r-homo').textContent='SCANNING...';
-    document.getElementById('r-lock').textContent='SCANNING';
-    document.getElementById('s-lock').textContent='● LOCK:SCAN';document.getElementById('s-lock').className='warn';
-    setV('v-contour','SCANNING','warn');
-  }
-  cvFrameCount++;const now=performance.now();
-  if(now-cvFpsT>=1000){
-    const fps=cvFrameCount;cvFrameCount=0;cvFpsT=now;
-    document.getElementById('s-fps').textContent='FPS:'+fps;
-    document.getElementById('s-fps').className=fps>=20?'on':'warn';
-  }
-}
-function autoSuggest(bb){
-  const ar=bb.width/bb.height;
-  let s;
-  if(ar>0.9&&ar<1.1)s=GLYPHS.find(g=>g.id==='sun-disk');
-  else if(ar>0.6&&ar<0.85)s=GLYPHS.find(g=>g.id==='ankh');
-  else if(ar>1.3)s=GLYPHS.find(g=>g.id==='djed');
-  else s=GLYPHS[Math.floor(Date.now()/3000)%GLYPHS.length];
-  if(s&&(!currentGlyph||currentGlyph.id!==s.id)){selectGlyph(s);updateMode('CV AUTO-LOCKED');}
-}
+      cv.cvtColor(frameSourceMat, binaryProcessingMat, cv.COLOR_RGBA2GRAY);
+      let threshold = parseInt(document.getElementById('thresholdSlider').value);
+      cv.Canny(binaryProcessingMat, binaryProcessingMat, threshold, threshold * 2, 3, false);
 
-// ============================================================
-// GLYPH VAULT — Grok's module + IndexedDB persistence (Jenova)
-// ============================================================
-let db=null;
-function checkVaultPersist(){
-  try{
-    const req=indexedDB.open('RosettaVault',1);
-    req.onupgradeneeded=e=>{e.target.result.createObjectStore('glyphs',{keyPath:'id',autoIncrement:true});};
-    req.onsuccess=e=>{db=e.target.result;setV('v-persist','IndexedDB ✓','');log('Vault persistence: IndexedDB active','ok');};
-    req.onerror=()=>{setV('v-persist','MEMORY ONLY','warn');log('IndexedDB unavailable — memory only','warn');};
-  }catch(e){setV('v-persist','MEMORY ONLY','warn');}
-}
-function loadVaultFromStorage(){
-  if(!db)return;
-  const tx=db.transaction('glyphs','readonly');
-  const req=tx.objectStore('glyphs').getAll();
-  req.onsuccess=e=>{
-    const records=e.target.result;
-    records.forEach(r=>{
-      const c=document.createElement('canvas');c.width=256;c.height=256;
-      const img=new Image();img.onload=()=>{c.getContext('2d').drawImage(img,0,0);glyphVault.push(c);renderVault();};
-      img.src=r.dataUrl;
-    });
-    if(records.length)log('Loaded '+records.length+' glyphs from vault','ok');
-    document.getElementById('vault-badge').textContent=glyphVault.length+' STORED';
-    document.getElementById('s-vault-count').textContent='VAULT:'+glyphVault.length;
-  };
-}
-function captureGlyph(){
-  const snap=document.createElement('canvas');snap.width=256;snap.height=256;
-  snap.getContext('2d').drawImage(warpCanvas,0,0);
-  glyphVault.push(snap);
-  if(db){
-    const tx=db.transaction('glyphs','readwrite');
-    tx.objectStore('glyphs').add({dataUrl:snap.toDataURL(),ts:Date.now()});
-  }
-  renderVault();
-  document.getElementById('vault-badge').textContent=glyphVault.length+' STORED';
-  document.getElementById('s-vault-count').textContent='VAULT:'+glyphVault.length;
-  log('Glyph captured — vault: '+glyphVault.length,'ok');
-  toast('✦ GLYPH CAPTURED — VAULT:'+glyphVault.length);
-}
-function renderVault(){
-  const grid=document.getElementById('vault-grid');grid.innerHTML='';
-  for(let i=0;i<glyphVault.length;i++){
-    const thumb=document.createElement('div');thumb.className='vault-thumb';thumb.title='Glyph #'+(i+1);
-    const tc=document.createElement('canvas');tc.width=64;tc.height=64;
-    tc.getContext('2d').drawImage(glyphVault[i],0,0,64,64);
-    thumb.appendChild(tc);thumb.onclick=()=>enlargeGlyph(i);grid.appendChild(thumb);
-  }
-  const empty=Math.max(0,12-glyphVault.length);
-  for(let i=0;i<empty;i++){const s=document.createElement('div');s.className='vault-thumb';s.textContent='—';grid.appendChild(s);}
-}
-function enlargeGlyph(i){
-  const url=glyphVault[i].toDataURL();
-  const w=window.open('','_blank','width=512,height=512');
-  w.document.write(`<body style="background:#000;margin:0;display:flex;align-items:center;justify-content:center;height:100vh"><img src="${url}" style="max-width:100%;image-rendering:pixelated;"></body>`);
-}
-function clearAll(){
-  glyphVault=[];
-  if(db){const tx=db.transaction('glyphs','readwrite');tx.objectStore('glyphs').clear();}
-  renderVault();
-  document.getElementById('vault-badge').textContent='0 STORED';
-  document.getElementById('s-vault-count').textContent='VAULT:0';
-  log('Vault cleared','info');toast('✕ VAULT CLEARED');
-}
+      let contoursList = new cv.MatVector();
+      let hierarchyMatrix = new cv.Mat();
+      cv.findContours(binaryProcessingMat, contoursList, hierarchyMatrix, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-// ============================================================
-// TENSORFLOW.js
-// ============================================================
-async function initTF(){
-  try{
-    await tf.ready();const backend=tf.getBackend();
-    tfModel=tf.sequential({layers:[
-      tf.layers.dense({inputShape:[4],units:32,activation:'relu'}),
-      tf.layers.dropout({rate:0.2}),
-      tf.layers.dense({units:20,activation:'softmax'}),
-    ]});
-    tfModel.compile({optimizer:'adam',loss:'categoricalCrossentropy',metrics:['accuracy']});
-    const xs=tf.tensor2d(GLYPHS.map(g=>[g.freq/1000,g.sacred/50,g.category==='life'?1:0,g.category==='celestial'?1:0]));
-    const ys=tf.oneHot(tf.tensor1d(GLYPHS.map(g=>g.tfClass),'int32'),20);
-    await tfModel.fit(xs,ys,{epochs:30,verbose:0});
-    xs.dispose();ys.dispose();
-    tfReady=true;
-    setV('v-tf','READY','');
-    document.getElementById('s-tf').textContent='● TF:READY';document.getElementById('s-tf').className='on';
-    document.getElementById('tf-badge').textContent='READY ✓';
-    log('TF.js ready — '+backend.toUpperCase(),'tf');
-    toast('🧠 TF.js READY — '+backend.toUpperCase());
-  }catch(e){setV('v-tf','ERROR','alert');log('TF error: '+e.message,'warn');}
-}
-async function runTF(){
-  if(!tfReady||!tfModel)return toast('⚠ TF NOT READY');
-  if(!currentGlyph)return toast('⚠ SELECT A GLYPH');
-  document.getElementById('btn-tf').classList.add('on');
-  const input=tf.tensor2d([[currentGlyph.freq/1000,currentGlyph.sacred/50,currentGlyph.category==='life'?1:0,currentGlyph.category==='celestial'?1:0]]);
-  const pred=tfModel.predict(input);const scores=await pred.data();
-  input.dispose();pred.dispose();
-  const top=[...scores].map((s,i)=>({g:GLYPHS[i],s})).sort((a,b)=>b.s-a.s).slice(0,5);
-  const div=document.getElementById('tf-results');div.innerHTML='';
-  top.forEach((item,i)=>{
-    const pct=Math.round(item.s*100);
-    const row=document.createElement('div');
-    row.innerHTML=`<div class="tf-row"><span class="tf-name">${i+1}. ${item.g.symbol} ${item.g.name}</span><span class="tf-score">${pct}%</span></div><div class="tf-bar"><div class="tf-fill" style="width:${pct}%;background:${i===0?'var(--gold)':i===1?'var(--cyan)':'var(--text-dim)'}"></div></div>`;
-    div.appendChild(row);
-  });
-  const conf=Math.round(top[0].s*100);
-  document.getElementById('dec-tf').style.display='block';document.getElementById('dec-tf').textContent='TF:'+conf+'%';
-  updateMode('TF LOCKED');log('TF: '+top[0].g.name+' @ '+conf+'%','tf');
-  toast('🧠 TF: '+top[0].g.name+' @ '+conf+'%');
-}
+      let areaFloor = parseInt(document.getElementById('areaSlider').value);
+      let validatedPoly = null;
+      let targetedSurfaceArea = areaFloor;
 
-// ============================================================
-// WGL SACRED GEOMETRY
-// ============================================================
-function initWGL(){
-  const canvas=document.getElementById('webgl-canvas');
-  wglCtx=canvas.getContext('webgl',{antialias:true,alpha:true});
-  if(!wglCtx)return false;
-  const vs=`attribute vec4 aP;attribute float aA;uniform mat4 uM;uniform float uT;varying float vA;void main(){vec4 p=aP;p.xy+=sin(uT*0.8+aP.yx*2.0)*0.015;gl_Position=uM*p;vA=aA;}`;
-  const fs=`precision mediump float;uniform vec3 uC;varying float vA;void main(){gl_FragColor=vec4(uC,vA);}`;
-  const v=mkWGLShader(wglCtx,wglCtx.VERTEX_SHADER,vs),f=mkWGLShader(wglCtx,wglCtx.FRAGMENT_SHADER,fs);
-  if(!v||!f)return false;
-  const p=wglCtx.createProgram();wglCtx.attachShader(p,v);wglCtx.attachShader(p,f);wglCtx.linkProgram(p);
-  wglCtx.useProgram(p);wglCtx._p=p;
-  wglCtx._uM=wglCtx.getUniformLocation(p,'uM');wglCtx._uT=wglCtx.getUniformLocation(p,'uT');wglCtx._uC=wglCtx.getUniformLocation(p,'uC');
-  wglCtx._aP=wglCtx.getAttribLocation(p,'aP');wglCtx._aA=wglCtx.getAttribLocation(p,'aA');
-  wglCtx.enable(wglCtx.BLEND);wglCtx.blendFunc(wglCtx.SRC_ALPHA,wglCtx.ONE_MINUS_SRC_ALPHA);
-  return true;
-}
-function mkWGLShader(gl,type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))return null;return s;}
-function wglFrame(){
-  if(!wglActive||!wglCtx)return;
-  const gl=wglCtx;wglTime+=0.016;
-  gl.clearColor(0.04,0.04,0.03,1);gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.viewport(0,0,gl.canvas.width,gl.canvas.height);
-  const sides=currentGlyph?Math.max(3,currentGlyph.sacred%8+3):6;
-  const freq=currentGlyph?currentGlyph.freq/1000:0.5;
-  const verts=[],alphas=[];
-  for(let i=0;i<sides;i++){const a1=i/sides*Math.PI*2,a2=(i+1)/sides*Math.PI*2;verts.push(0,0,0,Math.cos(a1)*0.6,Math.sin(a1)*0.6,0,Math.cos(a2)*0.6,Math.sin(a2)*0.6,0);alphas.push(0.25,0.75,0.75);}
-  for(let i=0;i<sides;i++){const a1=i/sides*Math.PI*2,a2=(i+0.5)/sides*Math.PI*2;verts.push(0,0,0,Math.cos(a1)*0.3*freq,Math.sin(a1)*0.3*freq,0,Math.cos(a2)*0.14,Math.sin(a2)*0.14,0);alphas.push(0.15,0.85,0.85);}
-  const rn=32;for(let i=0;i<rn;i++){const a1=i/rn*Math.PI*2,a2=(i+1)/rn*Math.PI*2,r=0.78;verts.push(Math.cos(a1)*r,Math.sin(a1)*r,0,Math.cos(a2)*r,Math.sin(a2)*r,0,Math.cos(a1)*r*0.96,Math.sin(a1)*r*0.96,0);alphas.push(0.3,0.3,0.06);}
-  const cnt=verts.length/3;
-  const asp=gl.canvas.width/gl.canvas.height;
-  const mat=[1/asp,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
-  gl.uniformMatrix4fv(wglCtx._uM,false,mat);gl.uniform1f(wglCtx._uT,wglTime);
-  gl.uniform3f(wglCtx._uC,0.788,0.659+(freq*0.08),0.298);
-  const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(verts),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(wglCtx._aP);gl.vertexAttribPointer(wglCtx._aP,3,gl.FLOAT,false,0,0);
-  const ab=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,ab);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(alphas),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(wglCtx._aA);gl.vertexAttribPointer(wglCtx._aA,1,gl.FLOAT,false,0,0);
-  gl.drawArrays(gl.TRIANGLES,0,cnt);gl.deleteBuffer(vb);gl.deleteBuffer(ab);
-  wglAnimId=requestAnimationFrame(wglFrame);
-}
-function toggleWGL(){
-  const btn=document.getElementById('btn-wgl'),canvas=document.getElementById('webgl-canvas');
-  canvas.width=canvas.offsetWidth||240;canvas.height=110;
-  if(!wglActive){
-    if(!wglCtx&&!initWGL())return toast('⚠ WGL INIT FAILED');
-    wglActive=true;btn.classList.add('on');btn.textContent='⬡ WGL ON';
-    document.getElementById('s-wgl').textContent='● WGL:ON';document.getElementById('s-wgl').className='on';
-    document.getElementById('wgl-badge').textContent='ACTIVE';setV('v-wgl','ACTIVE','');
-    wglFrame();toast('⬡ SACRED GEOMETRY ACTIVE');
-  }else{
-    wglActive=false;if(wglAnimId){cancelAnimationFrame(wglAnimId);wglAnimId=null;}
-    btn.classList.remove('on');btn.textContent='⬡ WGL';
-    document.getElementById('s-wgl').textContent='● WGL:OFF';document.getElementById('s-wgl').className='off';
-    document.getElementById('wgl-badge').textContent='OFFLINE';setV('v-wgl','OFFLINE','idle');
-    toast('⬡ WGL OFFLINE');
-  }
-}
+      for (let i = 0; i < contoursList.size(); ++i) {
+        let contourNode = contoursList.get(i);
+        let currentArea = cv.contourArea(contourNode);
+        if (currentArea > targetedSurfaceArea) {
+          let approxPolygon = new cv.Mat();
+          let boundaryArcLength = cv.arcLength(contourNode, true);
+          cv.approxPolyDP(contourNode, approxPolygon, 0.02 * boundaryArcLength, true);
+          if (approxPolygon.rows === 4) {
+            targetedSurfaceArea = currentArea;
+            if (validatedPoly) validatedPoly.delete(); // Delete previous best
+            validatedPoly = approxPolygon; // Keep this one
+          } else {
+            approxPolygon.delete(); // Delete non-quads
+          }
+        }
+      }
 
-// ============================================================
-// JENOVA: ACOUSTIC RESONANCE ENGINE (layered harmonics + resonance ring)
-// ============================================================
-function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
-function playFreq(freq,dur=1.5,type='sine'){
-  try{
-    const ctx=getAudio();
-    // Fundamental
-    const osc=ctx.createOscillator(),gain=ctx.createGain();
-    osc.connect(gain);gain.connect(ctx.destination);osc.type=type;
-    osc.frequency.setValueAtTime(freq,ctx.currentTime);
-    gain.gain.setValueAtTime(0.25,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
-    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+dur);
-    // Jenova: 2nd harmonic overlay
-    const osc2=ctx.createOscillator(),gain2=ctx.createGain();
-    osc2.connect(gain2);gain2.connect(ctx.destination);osc2.type='triangle';
-    osc2.frequency.setValueAtTime(freq*2,ctx.currentTime);
-    gain2.gain.setValueAtTime(0.08,ctx.currentTime);gain2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur*0.8);
-    osc2.start(ctx.currentTime);osc2.stop(ctx.currentTime+dur*0.8);
-    // Jenova: Sub harmonic
-    const osc3=ctx.createOscillator(),gain3=ctx.createGain();
-    osc3.connect(gain3);gain3.connect(ctx.destination);osc3.type='sine';
-    osc3.frequency.setValueAtTime(freq*0.5,ctx.currentTime);
-    gain3.gain.setValueAtTime(0.06,ctx.currentTime);gain3.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur*1.2);
-    osc3.start(ctx.currentTime);osc3.stop(ctx.currentTime+dur*1.2);
-    // Activate resonance ring
-    const ring=document.getElementById('res-ring');ring.classList.add('active');
-    setTimeout(()=>ring.classList.remove('active'),dur*1000);
-    setV('v-audio','ACTIVE '+freq+'Hz','');
-    setTimeout(()=>setV('v-audio','IDLE','idle'),dur*1000);
-  }catch(e){console.warn(e);}
-}
+      if (validatedPoly) {
+        executeHomographyTransformation(frameSourceMat, validatedPoly);
+        let tracingColor = new cv.Scalar(0, 240, 255, 255);
+        cv.drawContours(frameSourceMat, contoursList, -1, tracingColor, 2, cv.LINE_8, hierarchyMatrix, 0);
+        validatedPoly.delete(); // Delete the best poly after use
+      }
 
-// ============================================================
-// WAVE
-// ============================================================
-function renderWave(freq){
-  const c=document.getElementById('wave-con');c.innerHTML='';
-  for(let i=0;i<36;i++){const b=document.createElement('div');b.className='wave-bar';b.style.height=(Math.abs(Math.sin(i*0.38+freq*0.01))*20+4)+'px';c.appendChild(b);}
-  if(waveAnimId)cancelAnimationFrame(waveAnimId);
-  let frame=0;const animate=()=>{if(frame>80){waveAnimId=null;return;}document.querySelectorAll('.wave-bar').forEach((b,i)=>{b.style.height=(Math.abs(Math.sin(i*0.38+frame*0.12+freq*0.001))*20+4)+'px';});frame++;waveAnimId=requestAnimationFrame(animate);};
-  waveAnimId=requestAnimationFrame(animate);
-}
+      cv.imshow('trackingCanvas', frameSourceMat);
+      contoursList.delete();
+      hierarchyMatrix.delete();
+      
+      requestAnimationFrame(renderOpticalProcessingEngine);
+    }
 
-// ============================================================
-// PiP
-// ============================================================
-function togglePip(){
-  pipActive=!pipActive;
-  const win=document.getElementById('pip-win'),btn=document.getElementById('btn-pip');
-  if(pipActive){win.classList.add('on');btn.textContent='◫ PiP ON';renderPip();toast('◫ PiP ACTIVE');}
-  else{closePip();}
-}
-function closePip(){pipActive=false;document.getElementById('pip-win').classList.remove('on');document.getElementById('btn-pip').textContent='◫ PiP';}
-function renderPip(){
-  if(!pipActive)return;
-  const c=document.getElementById('pip-canvas'),ctx=c.getContext('2d');
-  ctx.fillStyle='#0a0a08';ctx.fillRect(0,0,c.width,c.height);
-  if(currentGlyph){
-    ctx.fillStyle='#c9a84c';ctx.font='34px serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.shadowColor='#f0c040';ctx.shadowBlur=10;ctx.fillText(currentGlyph.symbol,38,40);ctx.shadowBlur=0;
-    ctx.strokeStyle='rgba(201,168,76,0.5)';ctx.lineWidth=1;ctx.beginPath();
-    for(let x=70;x<168;x++){const y=40+Math.sin((x/98)*Math.PI*3+(Date.now()/350))*9;x===70?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
-    ctx.fillStyle='#00e5ff';ctx.font='7px monospace';ctx.textAlign='left';ctx.fillText(currentGlyph.freq+' Hz',72,67);
-    ctx.fillStyle='#888';ctx.fillText(currentGlyph.name,72,76);
-  }else{ctx.fillStyle='#333';ctx.font='7px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('NO GLYPH',85,40);}
-  if(pipActive)setTimeout(renderPip,50);
-}
+    function executeHomographyTransformation(src, polygonCoordinates) {
+      let pipCanvas = document.getElementById('pipCanvas');
+      let outputBounds = new cv.Size(pipCanvas.width, pipCanvas.height);
+      let transformedDestinationMat = new cv.Mat();
+      let extractedCoordinates = [];
+      for (let i = 0; i < 4; i++) {
+        let indexX = polygonCoordinates.data32S[i * 2];
+        let indexY = polygonCoordinates.data32S[i * 2 + 1];
+        extractedCoordinates.push({ x: indexX, y: indexY });
+      }
+      // 4-Corner Clockwise Sort Matrix Correction
+      extractedCoordinates.sort((a, b) => a.x - b.x);
+      let leftMostPoints = [extractedCoordinates[0], extractedCoordinates[1]].sort((a, b) => a.y - b.y);
+      let rightMostPoints = [extractedCoordinates[2], extractedCoordinates[3]].sort((a, b) => a.y - b.y);
+      let topLeftPoint = leftMostPoints[0];
+      let bottomLeftPoint = leftMostPoints[1];
+      let topRightPoint = rightMostPoints[0];
+      let bottomRightPoint = rightMostPoints[1];
+      let sourceFloatArray = new Float32Array([topLeftPoint.x, topLeftPoint.y, topRightPoint.x, topRightPoint.y, bottomRightPoint.x, bottomRightPoint.y, bottomLeftPoint.x, bottomLeftPoint.y]);
+      let destinationFloatArray = new Float32Array([0, 0, pipCanvas.width, 0, pipCanvas.width, pipCanvas.height, 0, pipCanvas.height]);
+      let sourceCoordinatesMat = cv.matFromArray(4, 1, cv.CV_32FC2, sourceFloatArray);
+      let destinationCoordinatesMat = cv.matFromArray(4, 1, cv.CV_32FC2, destinationFloatArray);
+      let perspectiveWarpMatrix = cv.getPerspectiveTransform(sourceCoordinatesMat, destinationCoordinatesMat);
+      cv.warpPerspective(src, transformedDestinationMat, perspectiveWarpMatrix, outputBounds, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+      cv.imshow('pipCanvas', transformedDestinationMat);
+      transformedDestinationMat.delete();
+      sourceCoordinatesMat.delete();
+      destinationCoordinatesMat.delete();
+      perspectiveWarpMatrix.delete();
+    }
 
-// ============================================================
-// GLYPH CONTROLS
-// ============================================================
-function renderGlyphGrid(glyphs){
-  const g=document.getElementById('glyph-grid');g.innerHTML='';
-  glyphs.forEach(gl=>{
-    const btn=document.createElement('button');btn.className='glyph-btn';btn.id='gb-'+gl.id;
-    btn.innerHTML=`<span class="gs">${gl.symbol}</span><span class="gn">${gl.name}</span>`;
-    btn.onclick=()=>selectGlyph(gl);btn.title=gl.meaning;g.appendChild(btn);
-  });
-}
-function setupSearch(){document.getElementById('glyph-search').addEventListener('input',e=>{const q=e.target.value.toLowerCase();renderGlyphGrid(q?GLYPHS.filter(g=>g.name.toLowerCase().includes(q)||g.domain.toLowerCase().includes(q)||g.meaning.toLowerCase().includes(q)||g.mlayer.toLowerCase().includes(q)):GLYPHS);});}
-function filterGlyphs(cat){renderGlyphGrid(cat==='all'?GLYPHS:GLYPHS.filter(g=>g.category===cat));}
-function selectGlyph(g){
-  document.querySelectorAll('.glyph-btn').forEach(b=>b.classList.remove('selected'));
-  const btn=document.getElementById('gb-'+g.id);if(btn)btn.classList.add('selected');
-  currentGlyph=g;updateDecoder(g);updateMode('LOCKED');renderWave(g.freq);
-  setV('v-dlt','LOCKED','');setV('v-contour','VERIFIED','');
-  if(gpuActive)renderGPUDemo();if(pipActive)renderPip();
-}
-function updateDecoder(g){
-  document.getElementById('dec-symbol').textContent=g.symbol;
-  document.getElementById('dec-name').textContent=g.name;
-  document.getElementById('dec-phonetic').textContent=g.phonetic;
-  document.getElementById('dec-meaning').textContent=g.meaning;
-  document.getElementById('dec-freq').textContent=g.freq+' Hz';
-  document.getElementById('dec-match').style.display='block';
-  const fields=['phoneme','freq-val','sacred','geo','mlayer','domain'];
-  const vals=[g.phoneme,g.freq+' Hz',g.sacred,g.geometry,g.mlayer,g.domain];
-  fields.forEach((f,i)=>{const el=document.getElementById('dc-'+f);if(el){el.textContent=vals[i];el.className='dc-val';}});
-}
-function awakGlyph(){if(!currentGlyph)return toast('SELECT GLYPH');playFreq(currentGlyph.freq);updateMode('AWAKENED');pulseDecoder();toast('AWAKENING '+currentGlyph.name+' @ '+currentGlyph.freq+'Hz');}
-function sealGlyph(){
-  if(!currentGlyph)return toast('SELECT GLYPH');
-  sealedSeq.push({...currentGlyph});updateMode('SEALED');playFreq(currentGlyph.freq,0.6);
-  renderSeqLog();updateFreqStack();updateSeqMeaning();
-  setV('v-coherence','ACTIVE','');checkAnomaly();
-  toast('SEALED: '+currentGlyph.name+' ['+sealedSeq.length+']');
-}
-function resonateGlyph(){
-  if(!currentGlyph)return toast('SELECT GLYPH');
-  playFreq(currentGlyph.freq,3,'sine');
-  setTimeout(()=>playFreq(currentGlyph.freq*1.5,2.5,'triangle'),600);
-  setTimeout(()=>playFreq(currentGlyph.freq*2,2,'sine'),1200);
-  setTimeout(()=>playFreq(7.83,4,'sine'),300);
-  updateMode('RESONATING');toast('RESONATING '+currentGlyph.name+' + SCHUMANN 7.83Hz');
-}
-function chordGlyphs(){if(sealedSeq.length<2)return toast('SEAL 2+ GLYPHS');sealedSeq.slice(0,4).forEach((g,i)=>setTimeout(()=>playFreq(g.freq,3),i*120));updateMode('CHORD ACTIVE');activateWarpField();toast('CHORD ACTIVE');}
-function quantumScan(){updateMode('QUANTUM SCANNING');let i=0;const s=setInterval(()=>{if(i>=GLYPHS.length){clearInterval(s);updateMode('SCAN COMPLETE');return;}document.getElementById('dec-name').textContent=GLYPHS[i].name;document.getElementById('dec-symbol').textContent=GLYPHS[i].symbol;i++;},65);}
-function setupKeyboard(){document.addEventListener('keydown',e=>{if(document.activeElement===document.getElementById('glyph-search'))return;if(e.code==='Space'){e.preventDefault();awakGlyph();}else if(e.code==='Enter'){e.preventDefault();sealGlyph();}else{switch(e.key.toLowerCase()){case'r':resonateGlyph();break;case'c':chordGlyphs();break;case'v':toggleCamera();break;case'g':toggleGPU();break;case'w':toggleWGL();break;case't':runTF();break;case'p':togglePip();break;case'q':quantumScan();break;case'escape':resetEngine();break;}}if(e.key==='C'&&e.shiftKey)captureGlyph();});}
-function resetEngine(){
-  currentGlyph=null;sealedSeq=[];anomaly=0;
-  if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}
-  if(camActive)toggleCamera();if(wglActive)toggleWGL();if(gpuActive)toggleGPU();if(pipActive)closePip();
-  document.getElementById('dec-symbol').textContent='☥';
-  document.getElementById('dec-name').textContent='AWAITING LOCK';
-  document.getElementById('dec-phonetic').textContent='Select glyph · Camera · TF · GPU';
-  document.getElementById('dec-meaning').textContent='Sovereign Fusion v6 — James · Claude · Grok · Jenova.';
-  document.getElementById('dec-match').style.display='none';
-  document.getElementById('dec-freq').textContent='';
-  document.getElementById('dec-tf').style.display='none';
-  ['phoneme','freq-val','sacred','geo','mlayer','domain'].forEach(f=>{const el=document.getElementById('dc-'+f);if(el){el.textContent='—';el.className='dc-val empty';}});
-  document.getElementById('seq-log').innerHTML='<div style="color:var(--text-dim);font-size:8px;">Seal glyphs...</div>';
-  document.getElementById('seq-text').textContent='Seal 2+ glyphs...';
-  document.getElementById('freq-stack').textContent='No frequencies...';
-  document.getElementById('wave-con').innerHTML='<span style="color:var(--text-dim);font-size:8px;letter-spacing:2px;">ACOUSTIC IDLE</span>';
-  document.querySelectorAll('.glyph-btn').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('btn-tf').classList.remove('on');
-  setV('v-anomaly','0.000','');setV('v-coherence','IDLE','idle');
-  deactivateWarpField();updateMode('STANDBY');toast('SOVEREIGN RESET');
-}
-function clearSequence(){sealedSeq=[];document.getElementById('seq-log').innerHTML='<div style="color:var(--text-dim);font-size:8px;">Cleared.</div>';document.getElementById('seq-text').textContent='Seal 2+ glyphs...';document.getElementById('freq-stack').textContent='No frequencies...';setV('v-coherence','IDLE','idle');deactivateWarpField();}
-function renderSeqLog(){const log=document.getElementById('seq-log');log.innerHTML='';sealedSeq.forEach((g,i)=>{const e=document.createElement('div');e.className='seq-entry';e.innerHTML=`<span style="color:var(--text-dim);font-size:7px;">${i+1}.</span><span class="se-sym">${g.symbol}</span><div><div class="se-name">${g.name}</div><div style="font-size:7px;color:var(--text-dim);">${g.domain}</div></div><span class="se-freq">${g.freq}Hz</span>`;log.appendChild(e);});log.scrollTop=log.scrollHeight;}
-function updateFreqStack(){const s=document.getElementById('freq-stack');if(!sealedSeq.length){s.textContent='No frequencies...';return;}const mean=Math.round(sealedSeq.reduce((a,g)=>a+g.freq,0)/sealedSeq.length);s.innerHTML=sealedSeq.map(g=>`<div style="color:var(--gold);font-size:8px;margin:1px 0;">${g.name}:<span style="color:var(--cyan)">${g.freq}Hz</span></div>`).join('')+`<div style="border-top:1px solid var(--border);margin-top:3px;padding-top:3px;font-size:8px;color:var(--gold-bright);">MEAN:<span style="color:var(--cyan)">${mean}Hz</span></div>`;}
-function updateSeqMeaning(){const div=document.getElementById('seq-text');if(sealedSeq.length<2){div.textContent='Seal 2+ glyphs...';div.style.color='var(--text-dim)';return;}const key=sealedSeq.slice(0,2).map(g=>g.name).join('-');div.textContent=SEQ[key]||`Resonance: ${sealedSeq.map(g=>g.domain).join(' · ')} @ ${Math.round(sealedSeq.reduce((s,g)=>s+g.freq,0)/sealedSeq.length)}Hz`;div.style.color='var(--gold)';}
-function activateWarpField(){warpActive=true;document.getElementById('decoder-wrap').style.animation='warpPulse 2s infinite';setV('v-warp-field','ENGAGED','');}
-function deactivateWarpField(){warpActive=false;document.getElementById('decoder-wrap').style.animation='';setV('v-warp-field','OFFLINE','idle');}
-function startVaultMonitor(){
-  setV('v-canny','READY','');setV('v-tf','LOADING','warn');
-  ['v-gpu-homo','v-dlt','v-contour','v-webgl2','v-wgl','v-audio','v-coherence','v-warp-field','v-camera'].forEach(id=>setV(id,'OFFLINE','idle'));
-  setV('v-anomaly','0.000','');setV('v-persist','CHECKING','warn');
-  setInterval(()=>{if(!camActive){const d=(0.94+Math.random()*0.1).toFixed(4);if(document.getElementById('v-dlt').textContent!=='LOCKED')setV('v-dlt',d,parseFloat(d)<0.97?'warn':'');}},2500);
-}
-function checkAnomaly(){anomaly+=Math.random()*0.01;const val=anomaly.toFixed(3);setV('v-anomaly',val,anomaly>0.15?'warn':'');document.getElementById('s-anomaly').textContent='ANOMALY:'+val;}
-function setV(id,val,cls){const el=document.getElementById(id);if(!el)return;el.textContent=val;el.className='vr-val'+(cls?' '+cls:'');}
-function updateMode(m){document.getElementById('r-mode').textContent=m;}
-function startFPS(){let last=performance.now();const t=()=>{document.getElementById('s-fps').textContent='FPS:'+Math.round(1000/(performance.now()-last));last=performance.now();requestAnimationFrame(t);};requestAnimationFrame(t);}
-function pulseDecoder(){const d=document.getElementById('decoder-wrap');d.style.boxShadow='0 0 28px rgba(201,168,76,0.3)';setTimeout(()=>d.style.boxShadow='',700);}
-let toastTimer=null;
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.opacity='0',2400);}
-function log(msg,type='info'){const box=document.getElementById('logBox');const e=document.createElement('span');e.className='le '+type;const ts=new Date().toLocaleTimeString('en-US',{hour12:false});e.textContent='['+ts+'] '+msg;box.appendChild(document.createElement('br'));box.appendChild(e);box.scrollTop=box.scrollHeight;}
-document.getElementById('edgeThresh').addEventListener('input',function(){document.getElementById('edgeThreshVal').textContent=this.value;});
-document.getElementById('minArea').addEventListener('input',function(){document.getElementById('minAreaVal').textContent=this.value;});
-boot();
-</script>
+    function parseOpticalBitmaskArray() {
+      const pipCanvas = document.getElementById('pipCanvas');
+      const renderingContext = pipCanvas.getContext('2d');
+      if (!renderingContext) return "0".repeat(64);
+      const opticalPixels = renderingContext.getImageData(0, 0, pipCanvas.width, pipCanvas.height).data;
+      let parsedBitsMatrix = [];
+      const horizontalStride = Math.floor(pipCanvas.width / 8);
+      const verticalStride = Math.floor(pipCanvas.height / 8);
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          let averageDensitySum = 0, operationalPixelCount = 0;
+          for (let y = row * verticalStride; y < (row + 1) * verticalStride; y++) {
+            for (let x = col * horizontalStride; x < (col + 1) * horizontalStride; x++) {
+              const baseIndex = (y * pipCanvas.width + x) * 4;
+              averageDensitySum += (0.299 * opticalPixels[baseIndex] + 0.587 * opticalPixels[baseIndex + 1] + 0.114 * opticalPixels[baseIndex + 2]);
+              operationalPixelCount++;
+            }
+          }
+          parsedBitsMatrix.push((averageDensitySum / operationalPixelCount) > 120 ? "1" : "0");
+        }
+      }
+      return parsedBitsMatrix.join('');
+    }
+
+    async function instantiateAsymmetricCryptoSandbox() {
+      dynamicAsymmetricKey = await window.crypto.subtle.generateKey(
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    async function processAsymmetricCryptoSeal() {
+      try {
+        const structuralBitmask = parseOpticalBitmaskArray();
+        const encoder = new TextEncoder();
+        const runtimeMetadataPayload = {
+          uniqueNodeId: Date.now(),
+          timestampCoordinates: new Date().toLocaleTimeString(),
+          calibrationIndex: document.getElementById('thresholdSlider').value,
+          extractedMatrixSignature: structuralBitmask
+        };
+        const convertedBinaryBuffer = encoder.encode(JSON.stringify(runtimeMetadataPayload));
+        const transactionInitializationVector = window.crypto.getRandomValues(new Uint8Array(12));
+        const encryptedCipherBuffer = await window.crypto.subtle.encrypt(
+          { name: "AES-GCM", iv: transactionInitializationVector },
+          dynamicAsymmetricKey,
+          convertedBinaryBuffer
+        );
+        const hexadecimalCiphertextString = Array.from(new Uint8Array(encryptedCipherBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const hexadecimalIvString = Array.from(transactionInitializationVector).map(b => b.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem(`rosetta_v66_ledger_${runtimeMetadataPayload.uniqueNodeId}`, JSON.stringify({
+          iv: hexadecimalIvString,
+          ciphertext: hexadecimalCiphertextString,
+          timestamp: runtimeMetadataPayload.timestampCoordinates,
+          matrixSample: structuralBitmask.substring(0, 16) + "..."
+        }));
+        refreshVaultLedgerDisplay();
+        alert("🔒 VAULT LOCKED: Node data safely isolated using AES-GCM 256-bit encryption.");
+      } catch (err) {
+        console.error("Cryptographic structural rupture: ", err);
+      }
+    }
+
+    function refreshVaultLedgerDisplay() {
+      const containerElement = document.getElementById('vaultLedgerContainer');
+      containerElement.innerHTML = "";
+      let transactionalKeys = Object.keys(localStorage).filter(k => k.startsWith('rosetta_v66_ledger_')).sort().reverse();
+      if (transactionalKeys.length === 0) {
+        containerElement.innerHTML = `<div style="color:#475569; text-align:center; font-size:10px; padding:16px;">[ SECURE CRYPTO-CACHE BLANK ]</div>`;
+        return;
+      }
+      transactionalKeys.forEach(key => {
+        const itemRecord = JSON.parse(localStorage.getItem(key));
+        const rowNode = document.createElement('div');
+        rowNode.className = "ledger-row";
+        rowNode.innerHTML = `<div class="ledger-meta"><span>BLOCK UNIT #${key.split('_')[3]}</span><span>${itemRecord.timestamp}</span></div> ⬢ SEAL PATTERN: ENVELOPE RECORDED</div> <div style="font-size:9px; color:#475569; font-family:sans-serif; word-break:break-all;">AES-GCM Ciphertext: ${itemRecord.ciphertext.substring(0, 48)}...</div> <button class="purge-btn" onclick="purgeTargetedRecordNode('${key}')">[ PURGE NODE ]</button>`;
+        containerElement.appendChild(rowNode);
+      });
+    }
+
+    function purgeTargetedRecordNode(key) { localStorage.removeItem(key); refreshVaultLedgerDisplay(); }
+    function purgeGlobalVaultMemory() { Object.keys(localStorage).filter(k => k.startsWith('rosetta_v66_ledger_')).forEach(k => localStorage.removeItem(k)); refreshVaultLedgerDisplay(); }
+  </script>
+
 </body>
 </html>
