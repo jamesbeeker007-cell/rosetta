@@ -1,1 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Rosetta Engine v6.7 // Omni-Decoder</title>
+  
+  <!-- 1. OpenCV for Vision/Warp -->
+  <script async src="https://docs.opencv.org/4.8.0/opencv.js" type="text/javascript"></script>
+  <!-- 2. Tesseract for Text Reading -->
+  <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
+  <style>
+    :root {
+      --bg-base: #030508;
+      --bg-panel: #090D16;
+      --border-line: #1E293B;
+      --neon-cyan: #00F0FF;
+      --neon-amber: #FFB800;
+      --neon-green: #39FF14;
+      --text-slate: #E2E8F0;
+      --alert-red: #EF4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-slate);
+      font-family: 'Courier New', Courier, monospace;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .rosetta-grid { display: grid; grid-template-cols: 1fr; gap: 16px; max-w: 1200px; margin: 0 auto; }
+    @media (min-width: 768px) { .rosetta-grid { grid-template-cols: 3fr 2fr; } }
+
+    .panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-line);
+      border-radius: 16px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .header-hud {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border-line);
+      padding-bottom: 12px; margin-bottom: 16px;
+    }
+
+    .hud-title {
+      font-size: 12px; font-weight: bold; letter-spacing: 2px;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+
+    .viewport-container {
+      position: relative; width: 100%; aspect-ratio: 4/3;
+      background-color: #000; border-radius: 12px;
+      overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    video, canvas {
+      position: absolute; top: 0; left: 0;
+      width: 100% !important; height: 100% !important;
+      object-fit: cover;
+    }
+    
+    .pip-wrapper {
+      position: absolute; bottom: 12px; right: 12px;
+      width: 120px; height: 120px;
+      border: 2px solid var(--neon-cyan); border-radius: 8px;
+      z-index: 30; background: #000; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    }
+
+    .pip-title {
+      position: absolute; top: 2px; left: 4px;
+      font-size: 8px; color: var(--neon-cyan); z-index: 40;
+      background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 2px;
+    }
+
+    .control-row { margin-top: 16px; }
+    .control-row label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #94A3B8; margin-bottom: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%; height: 6px; background: #1E293B;
+      border-radius: 4px; appearance: none; outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 20px; height: 20px;
+      border-radius: 50%; background: var(--neon-cyan);
+      cursor: pointer; box-shadow: 0 0 10px var(--neon-cyan);
+    }
+
+    .btn {
+      width: 100%; background: linear-gradient(135deg, #1E293B, #0F172A);
+      border: 1px solid var(--border-line); color: #FFF;
+      font-size: 11px; font-family: monospace; font-weight: bold;
+      letter-spacing: 1px; padding: 16px; border-radius: 12px;
+      margin-top: 12px; cursor: pointer; transition: all 0.2s ease-in-out;
+    }
+    .btn-cyan {
+      border-color: var(--neon-cyan); color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.05);
+    }
+    .btn-green {
+      border-color: var(--neon-green); color: var(--neon-green);
+      background: rgba(57, 255, 20, 0.05);
+    }
+    .btn:active { border-color: var(--neon-amber); color: var(--neon-amber); transform: scale(0.98); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--border-line); color: #475569; }
+
+    .ledger-container {
+      display: flex; flex-direction: column; gap: 12px;
+      max-h: 320px; overflow-y: auto; margin-top: 12px; padding-right: 4px;
+    }
+    .ledger-row {
+      background-color: rgba(255,255,255,0.01); border: 1px solid var(--border-line);
+      padding: 14px; border-radius: 10px; font-size: 11px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .ledger-meta { display: flex; justify-content: space-between; color: #475569; }
+    .ledger-text { color: var(--neon-green); word-break: break-word; font-size: 12px; }
+    .purge-btn {
+      font-size: 10px; color: var(--alert-red); background: none;
+      border: none; cursor: pointer; text-decoration: underline; align-self: flex-end;
+    }
+    
+    /* Loading Overlay */
+    #loadingOverlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(3, 5, 8, 0.95); z-index: 9999;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      color: var(--neon-cyan); font-family: monospace;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid var(--border-line);
+      border-top: 4px solid var(--neon-cyan); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadStatus">INITIALIZING CORE EXTENSION...</div>
+  </div>
+
+  <div class="rosetta-grid">
+    
+    <!-- LEFT: VISION DECODER -->
+    <div class="panel">
+      <div class="header-hud">
+        <div class="hud-title">☥ ROSETTA OMNI-DECODER v6.7</div>
+        <div id="engineStatus" style="font-size: 10px; color: var(--neon-amber); font-weight: bold;">[ STANDBY ]</div>
+      </div>
+      
+      <div class="viewport-container">
+        <video id="hardwareVideo" autoplay playsinline muted></video>
+        <canvas id="trackingCanvas"></canvas>
+        
+        <div class="pip-wrapper">
+          <div class="pip-title">WARPED CORE</div>
+          <canvas id="pipCanvas" width="128" height="128"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: CONTROLS -->
+    <div>
+      <div class="panel">
+        <div class="header-hud">
+          <div class="hud-title">🎛️ COGNITIVE TUNING</div>
+        </div>
+
+        <div class="control-row">
+          <label><span>Edge Canny Threshold</span><span id="threshDisplayValue" style="color: var(--neon-cyan)">45</span></label>
+          <input type="range" id="thresholdSlider" min="15" max="150" value="45" oninput="document.getElementById('threshDisplayValue').innerText=this.value">
+        </div>
+
+        <div class="control-row">
+          <label><span>Minimum Contour Area</span><span id="areaDisplayValue" style="color: var(--neon-cyan)">1800</span></label>
+          <input type="range" id="areaSlider" min="500" max="10000" value="1800" oninput="document.getElementById('areaDisplayValue').innerText=this.value">
+        </div>
+
+        <button class="btn btn-cyan" id="streamInitBtn" disabled onclick="bootHardwareOpticalStream()">📷 RUN HARDWARE FEED</button>
+        <button class="btn" id="sealMatrixBtn" disabled onclick="processAsymmetricCryptoSeal()">🔒 CRYPTO-SEAL GLYPH</button>
+        <button class="btn btn-green" id="ocrBtn" disabled onclick="performOCRScan()">👁️ SCAN & DECODE TEXT</button>
+      </div>
+
+      <div class="panel">
+        <div class="header-hud" style="margin-bottom: 8px;">
+          <div class="hud-title">🗄️ AES-GCM SECURE RECORD LOGS</div>
+          <button onclick="purgeGlobalVaultMemory()" style="background:none; border:none; color:var(--alert-red); font-size:10px; cursor:pointer; font-family: monospace;">[ PURGE ALL ]</button>
+        </div>
+        <div class="ledger-container" id="vaultLedgerContainer"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let activeStream = null;
+    let frameSourceMat = null;
+    let binaryProcessingMat = null;
+    let executionState = false;
+    let dynamicAsymmetricKey = null;
+    let lastWarpedImageData = null; // Store the last warped image for OCR
+
+    // OpenCV Runtime Initialization
+    var Module = {
+      onRuntimeInitialized: function() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('engineStatus').innerText = "[ CORE EXTENSION ENROLLED ]";
+        document.getElementById('engineStatus').style.color = "#00F0FF";
+        document.getElementById('streamInitBtn').disabled = false;
+        console.log("OpenCV.js Ready");
+      }
+    };
+
+    async function bootHardwareOpticalStream() {
+      const btn = document.getElementById('streamInitBtn');
+      btn.innerText = "INITIALIZING CAMERA...";
+      btn.disabled = true;
+
+      try {
+        const constraints = {
+          video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        };
+
+        activeStream = await navigator.mediaDevices.getUserMedia(constraints);
+        let videoFeed = document.getElementById('hardwareVideo');
+        videoFeed.srcObject = activeStream;
+        
+        await videoFeed.play();
+        
+        videoFeed.onloadedmetadata = () => {
+          frameSourceMat = new cv.Mat(videoFeed.videoHeight, videoFeed.videoWidth, cv.CV_8UC4);
+          binaryProcessingMat = new cv.Mat(videoFeed.videoHeight, videoFeed.videoWidth, cv.CV_8UC1);
+          
+          executionState = true;
+          
+          document.getElementById('sealMatrixBtn').disabled = false;
+          document.getElementById('ocrBtn').disabled = false;
+          btn.style.display = "none";
+          document.getElementById('engineStatus').innerText = "[ LIVE FEED ACTIVE ]";
+          
+          instantiateAsymmetricCryptoSandbox().then(() => {
+            refreshVaultLedgerDisplay();
+            requestAnimationFrame(renderOpticalProcessingEngine);
+          });
+        };
+      } catch (err) {
+        console.error(err);
+        alert("CAMERA ERROR: " + err.message);
+        btn.innerText = "📷 RUN HARDWARE FEED";
+        btn.disabled = false;
+      }
+    }
+
+    function renderOpticalProcessingEngine() {
+      if (!executionState) return;
+      let videoFeed = document.getElementById('hardwareVideo');
+      
+      if (videoFeed.readyState !== 4) {
+        requestAnimationFrame(renderOpticalProcessingEngine);
+        return;
+      }
+
+      let capture = new cv.VideoCapture(videoFeed);
+      capture.read(frameSourceMat);
+
+      cv.cvtColor(frameSourceMat, binaryProcessingMat, cv.COLOR_RGBA2GRAY);
+      let threshold = parseInt(document.getElementById('thresholdSlider').value);
+      cv.Canny(binaryProcessingMat, binaryProcessingMat, threshold, threshold * 2, 3, false);
+
+      let contoursList = new cv.MatVector();
+      let hierarchyMatrix = new cv.Mat();
+      cv.findContours(binaryProcessingMat, contoursList, hierarchyMatrix, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+      let areaFloor = parseInt(document.getElementById('areaSlider').value);
+      let validatedPoly = null;
+      let targetedSurfaceArea = areaFloor;
+
+      for (let i = 0; i < contoursList.size(); ++i) {
+        let contourNode = contoursList.get(i);
+        let currentArea = cv.contourArea(contourNode);
+        if (currentArea > targetedSurfaceArea) {
+          let approxPolygon = new cv.Mat();
+          let boundaryArcLength = cv.arcLength(contourNode, true);
+          cv.approxPolyDP(contourNode, approxPolygon, 0.02 * boundaryArcLength, true);
+          if (approxPolygon.rows === 4) {
+            targetedSurfaceArea = currentArea;
+            if (validatedPoly) validatedPoly.delete();
+            validatedPoly = approxPolygon;
+          } else {
+            approxPolygon.delete();
+          }
+        }
+      }
+
+      if (validatedPoly) {
+        executeHomographyTransformation(frameSourceMat, validatedPoly);
+        let tracingColor = new cv.Scalar(0, 240, 255, 255);
+        cv.drawContours(frameSourceMat, contoursList, -1, tracingColor, 2, cv.LINE_8, hierarchyMatrix, 0);
+        validatedPoly.delete();
+      }
+
+      cv.imshow('trackingCanvas', frameSourceMat);
+      contoursList.delete();
+      hierarchyMatrix.delete();
+      
+      requestAnimationFrame(renderOpticalProcessingEngine);
+    }
+
+    function executeHomographyTransformation(src, polygonCoordinates) {
+      let pipCanvas = document.getElementById('pipCanvas');
+      let outputBounds = new cv.Size(pipCanvas.width, pipCanvas.height);
+      let transformedDestinationMat = new cv.Mat();
+      let extractedCoordinates = [];
+      for (let i = 0; i < 4; i++) {
+        let indexX = polygonCoordinates.data32S[i * 2];
+        let indexY = polygonCoordinates.data32S[i * 2 + 1];
+        extractedCoordinates.push({ x: indexX, y: indexY });
+      }
+      
+      extractedCoordinates.sort((a, b) => a.x - b.x);
+      let leftMostPoints = [extractedCoordinates[0], extractedCoordinates[1]].sort((a, b) => a.y - b.y);
+      let rightMostPoints = [extractedCoordinates[2], extractedCoordinates[3]].sort((a, b) => a.y - b.y);
+      
+      let sourceFloatArray = new Float32Array([
+        leftMostPoints[0].x, leftMostPoints[0].y,
+        rightMostPoints[0].x, rightMostPoints[0].y,
+        rightMostPoints[1].x, rightMostPoints[1].y,
+        leftMostPoints[1].x, leftMostPoints[1].y
+      ]);
+      
+      let destinationFloatArray = new Float32Array([
+        0, 0, pipCanvas.width, 0, pipCanvas.width, pipCanvas.height, 0, pipCanvas.height
+      ]);
+      
+      let sourceCoordinatesMat = cv.matFromArray(4, 1, cv.CV_32FC2, sourceFloatArray);
+      let destinationCoordinatesMat = cv.matFromArray(4, 1, cv.CV_32FC2, destinationFloatArray);
+      let perspectiveWarpMatrix = cv.getPerspectiveTransform(sourceCoordinatesMat, destinationCoordinatesMat);
+      
+      cv.warpPerspective(src, transformedDestinationMat, perspectiveWarpMatrix, outputBounds, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+      cv.imshow('pipCanvas', transformedDestinationMat);
+      
+      // Capture the warped image data for OCR
+      const ctx = pipCanvas.getContext('2d');
+      lastWarpedImageData = ctx.getImageData(0, 0, pipCanvas.width, pipCanvas.height);
+
+      transformedDestinationMat.delete();
+      sourceCoordinatesMat.delete();
+      destinationCoordinatesMat.delete();
+      perspectiveWarpMatrix.delete();
+    }
+
+    // --- OCR FUNCTION ---
+    async function performOCRScan() {
+      if (!lastWarpedImageData) {
+        alert("No warped image detected yet. Point at a square glyph first.");
+        return;
+      }
+
+      const btn = document.getElementById('ocrBtn');
+      const originalText = btn.innerText;
+      btn.innerText = "👁️ READING GLYPH...";
+      btn.disabled = true;
+
+      try {
+        // Create a temporary canvas for Tesseract
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 128;
+        tempCanvas.height = 128;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.putImageData(lastWarpedImageData, 0, 0);
+
+        // Run Tesseract
+        const worker = await Tesseract.createWorker('eng');
+        const { data: { text } } = await worker.recognize(tempCanvas);
+        await worker.terminate();
+
+        const cleanText = text.trim();
+        const displayText = cleanText.length > 0 ? cleanText : "[NO CLEAR TEXT DETECTED]";
+
+        // Save to Encrypted Vault
+        await saveToVault(displayText, "OCR_SCAN");
+
+        alert(`DECODED:\n${displayText}`);
+
+      } catch (err) {
+        console.error("OCR Error:", err);
+        alert("OCR Failed: " + err.message);
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // --- CRYPTO VAULT FUNCTIONS ---
+    async function instantiateAsymmetricCryptoSandbox() {
+      dynamicAsymmetricKey = await window.crypto.subtle.generateKey(
+        { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+      );
+    }
+
+    async function saveToVault(content, type) {
+      const encoder = new TextEncoder();
+      const payload = {
+        uniqueNodeId: Date.now(),
+        timestamp: new Date().toLocaleTimeString(),
+        type: type, // "GLYPH_SEAL" or "OCR_SCAN"
+        content: content
+      };
+      
+      const buffer = encoder.encode(JSON.stringify(payload));
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      
+      const encryptedBuffer = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        dynamicAsymmetricKey,
+        buffer
+      );
+
+      const hexCipher = Array.from(new Uint8Array(encryptedBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const hexIv = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      localStorage.setItem(`rosetta_v67_ledger_${payload.uniqueNodeId}`, JSON.stringify({
+        iv: hexIv,
+        ciphertext: hexCipher,
+        timestamp: payload.timestamp,
+        type: payload.type,
+        preview: content.substring(0, 20) + "..."
+      }));
+      
+      refreshVaultLedgerDisplay();
+    }
+
+    async function processAsymmetricCryptoSeal() {
+      // For now, this just saves a generic seal. 
+      // In future, we can extract the bitmask here.
+      await saveToVault("GLYPH SEAL CAPTURED", "GLYPH_SEAL");
+      alert("🔒 VAULT LOCKED: Glyph Seal Saved.");
+    }
+
+    function refreshVaultLedgerDisplay() {
+      const containerElement = document.getElementById('vaultLedgerContainer');
+      containerElement.innerHTML = "";
+      let keys = Object.keys(localStorage).filter(k => k.startsWith('rosetta_v67_ledger_')).sort().reverse();
+      
+      if (keys.length === 0) {
+        containerElement.innerHTML = `<div style="color:#475569; text-align:center; font-size:10px; padding:16px;">[ SECURE CRYPTO-CACHE BLANK ]</div>`;
+        return;
+      }
+
+      keys.forEach(key => {
+        const item = JSON.parse(localStorage.getItem(key));
+        const rowNode = document.createElement('div');
+        rowNode.className = "ledger-row";
+        
+        const typeBadge = item.type === "OCR_SCAN" ? "👁️ OCR" : "🔒 SEAL";
+        
+        rowNode.innerHTML = `
+          <div class="ledger-meta">
+            <span>${typeBadge} #${key.split('_')[3]}</span>
+            <span>${item.timestamp}</span>
+          </div>
+          <div class="ledger-text">${item.preview}</div>
+          <button class="purge-btn" onclick="purgeTargetedRecordNode('${key}')">[ PURGE NODE ]</button>
+        `;
+        containerElement.appendChild(rowNode);
+      });
+    }
+
+    function purgeTargetedRecordNode(key) { localStorage.removeItem(key); refreshVaultLedgerDisplay(); }
+    function purgeGlobalVaultMemory() { 
+      Object.keys(localStorage).filter(k => k.startsWith('rosetta_v67_ledger_')).forEach(k => localStorage.removeItem(k)); 
+      refreshVaultLedgerDisplay(); 
+    }
+  </script>
+</body>
+</html>
+🚀 H
