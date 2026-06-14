@@ -3,13 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>☥ Rosetta Engine v6.8 — Sovereign Scanner</title>
-  
-  <!-- OpenCV.js -->
-  <script async src="https://docs.opencv.org/4.5.0/opencv.js"></script>
-  
-  <!-- Tesseract.js -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+  <title>☥ Rosetta Engine v6.9 — Sovereign Scanner</title>
   
   <style>
     :root {
@@ -27,7 +21,6 @@
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
     }
 
     body {
@@ -59,12 +52,8 @@
 
     .status {
       font-size: 11px;
-      color: var(--amber);
-      font-weight: bold;
-    }
-
-    .status.ready {
       color: var(--cyan);
+      font-weight: bold;
     }
 
     .panel {
@@ -82,7 +71,7 @@
       background: #000;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 2px solid var(--gold);
       margin-bottom: 12px;
     }
 
@@ -99,77 +88,14 @@
       z-index: 1;
     }
 
-    #canvas {
+    #overlay {
       z-index: 2;
-    }
-
-    .pip-container {
-      margin-top: 12px;
-    }
-
-    .pip-title {
-      font-size: 10px;
-      color: var(--cyan);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    #pipCanvas {
-      width: 100%;
-      border: 2px solid var(--gold);
-      border-radius: 8px;
-      background: #000;
-      margin-bottom: 8px;
     }
 
     .controls {
       display: flex;
       flex-direction: column;
       gap: 12px;
-    }
-
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    label {
-      font-size: 11px;
-      color: var(--cyan);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      height: 6px;
-      background: var(--border);
-      border-radius: 4px;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--cyan);
-      cursor: pointer;
-      box-shadow: 0 0 8px var(--cyan);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--cyan);
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 0 8px var(--cyan);
     }
 
     button {
@@ -190,7 +116,6 @@
 
     button:active {
       transform: scale(0.98);
-      background: linear-gradient(135deg, #2a2a3e, #1f273a);
     }
 
     button:disabled {
@@ -204,52 +129,10 @@
       background: rgba(0, 240, 255, 0.05);
     }
 
-    button.primary:active {
-      box-shadow: 0 0 12px var(--cyan);
-    }
-
     button.success {
       border-color: var(--gold);
       color: var(--gold);
       background: rgba(255, 184, 0, 0.05);
-    }
-
-    .mode-toggle {
-      display: flex;
-      gap: 8px;
-    }
-
-    .mode-btn {
-      flex: 1;
-      padding: 10px;
-      font-size: 11px;
-      border: 1px solid var(--border);
-      background: var(--bg-base);
-      color: var(--text);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .mode-btn.active {
-      border-color: var(--cyan);
-      background: rgba(0, 240, 255, 0.1);
-      color: var(--cyan);
-    }
-
-    .ocr-result {
-      background: var(--bg-base);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 11px;
-      color: var(--cyan);
-      margin-top: 12px;
-      min-height: 60px;
-      max-height: 160px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
     }
 
     .ledger {
@@ -271,29 +154,11 @@
 
     .ledger-entry:last-child {
       border-bottom: none;
-      margin-bottom: 0;
     }
 
     .timestamp {
       color: var(--amber);
       font-size: 9px;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--border);
-      border-top: 2px solid var(--cyan);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
 
     .footer {
@@ -305,14 +170,17 @@
       border-top: 1px solid var(--border);
     }
 
-    @media (max-width: 600px) {
-      .header h1 {
-        font-size: 16px;
-      }
-      button {
-        padding: 12px;
-        font-size: 11px;
-      }
+    label {
+      font-size: 11px;
+      color: var(--cyan);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin-bottom: 12px;
     }
   </style>
 </head>
@@ -321,43 +189,23 @@
 <div class="container">
   
   <div class="header">
-    <h1>☥ ROSETTA ENGINE v6.8</h1>
-    <div class="status" id="status">
-      <span class="spinner"></span>INITIALIZING CORE EXTENSION...
-    </div>
+    <h1>☥ ROSETTA ENGINE v6.9</h1>
+    <div class="status" id="status">✓ CORE EXTENSION ENROLLED</div>
   </div>
 
   <div class="panel">
     <div class="viewport">
       <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
-    </div>
-
-    <div class="pip-container">
-      <div class="pip-title">🔍 WARPED CORE (PERSPECTIVE CORRECTED)</div>
-      <canvas id="pipCanvas" width="320" height="240"></canvas>
+      <canvas id="overlay"></canvas>
     </div>
 
     <div class="controls">
-      <div class="control-group">
+      <div>
         <label>
-          <span>Edge Detection Threshold</span>
-          <span id="threshVal">45</span>
+          <span>Brightness Threshold</span>
+          <span id="threshVal">128</span>
         </label>
-        <input type="range" id="threshSlider" min="15" max="150" value="45">
-      </div>
-
-      <div class="control-group">
-        <label>
-          <span>Minimum Contour Area</span>
-          <span id="areaVal">1800</span>
-        </label>
-        <input type="range" id="areaSlider" min="500" max="10000" value="1800">
-      </div>
-
-      <div class="mode-toggle">
-        <button class="mode-btn active" onclick="setMode('cv')">📷 CV WARP</button>
-        <button class="mode-btn" onclick="setMode('ocr')">📝 OCR DECODE</button>
+        <input type="range" id="threshSlider" min="50" max="200" value="128">
       </div>
 
       <button class="primary" id="startBtn" onclick="startCamera()">
@@ -367,10 +215,6 @@
       <button class="success" id="sealBtn" onclick="cryptoSeal()" disabled>
         🔒 CRYPTO-SEAL & SAVE
       </button>
-    </div>
-
-    <div id="ocrResult" class="ocr-result" style="display:none;">
-      <strong>DECODED TEXT:</strong><br><span id="ocrText"></span>
     </div>
   </div>
 
@@ -396,43 +240,18 @@
 
 <script>
 let video = document.getElementById('video');
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d', { willReadFrequently: true });
-let pipCanvas = document.getElementById('pipCanvas');
-let pipCtx = pipCanvas.getContext('2d');
+let overlay = document.getElementById('overlay');
+let ctx = overlay.getContext('2d');
 
 let stream = null;
 let isRunning = false;
-let currentMode = 'cv';
-let threshValue = 45;
-let areaValue = 1800;
+let threshValue = 128;
 
-// Status updates
-function updateStatus(text, isReady = false) {
-  const el = document.getElementById('status');
-  el.textContent = text;
-  if (isReady) el.classList.add('ready');
-  else el.classList.remove('ready');
-}
-
-// Sliders
+// Threshold slider
 document.getElementById('threshSlider').addEventListener('input', e => {
   threshValue = parseInt(e.target.value);
   document.getElementById('threshVal').textContent = threshValue;
 });
-
-document.getElementById('areaSlider').addEventListener('input', e => {
-  areaValue = parseInt(e.target.value);
-  document.getElementById('areaVal').textContent = areaValue;
-});
-
-// Mode toggle
-function setMode(mode) {
-  currentMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('ocrResult').style.display = currentMode === 'ocr' ? 'block' : 'none';
-}
 
 // Start camera
 async function startCamera() {
@@ -443,136 +262,53 @@ async function startCamera() {
     video.srcObject = stream;
     await new Promise(resolve => video.onloadedmetadata = resolve);
     
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    overlay.width = video.videoWidth;
+    overlay.height = video.videoHeight;
     
     isRunning = true;
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('sealBtn').disabled = false;
-    updateStatus('✓ CAMERA ACTIVE — CORE EXTENSION ENROLLED', true);
+    document.getElementById('status').textContent = '✓ CAMERA ACTIVE — HARDWARE FEED STREAMING';
     
     processFrame();
   } catch (e) {
-    updateStatus('✗ CAMERA ERROR: ' + e.message);
+    document.getElementById('status').textContent = '✗ CAMERA ERROR: ' + e.message;
     alert('Camera access denied. Check iOS Settings > Safari > Camera.');
   }
 }
 
-// OpenCV processing
+// Frame processing (edge detection via brightness)
 function processFrame() {
   if (!isRunning) return;
 
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  
-  let src = cv.imread(canvas);
-  let gray = new cv.Mat();
-  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  
-  let edges = new cv.Mat();
-  cv.Canny(gray, edges, threshValue, threshValue * 2, 3, false);
-  
-  let contours = new cv.MatVector();
-  let hierarchy = new cv.Mat();
-  cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-  
-  let maxArea = areaValue;
-  let bestQuad = null;
-  
-  for (let i = 0; i < contours.size(); i++) {
-    let cnt = contours.get(i);
-    let area = cv.contourArea(cnt);
-    
-    if (area > maxArea) {
-      let approx = new cv.Mat();
-      let perimeter = cv.arcLength(cnt, true);
-      cv.approxPolyDP(cnt, approx, 0.02 * perimeter, true);
-      
-      if (approx.rows === 4) {
-        maxArea = area;
-        bestQuad = approx;
-      } else {
-        approx.delete();
-      }
-    }
+  ctx.drawImage(video, 0, 0, overlay.width, overlay.height);
+  const imgData = ctx.getImageData(0, 0, overlay.width, overlay.height);
+  const data = imgData.data;
+
+  // Simple edge detection via brightness threshold
+  for (let i = 0; i < data.length; i += 4) {
+    const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
+    const edge = brightness > threshValue ? 255 : 0;
+    data[i] = edge;
+    data[i+1] = edge;
+    data[i+2] = edge;
   }
-  
-  if (bestQuad) {
-    applyWarp(src, bestQuad);
-    let color = cv.cvScalar(0, 240, 255, 255);
-    cv.drawContours(src, contours, -1, color, 2, cv.LINE_8, hierarchy, 0);
-    bestQuad.delete();
-  }
-  
-  cv.imshow('canvas', src);
-  src.delete();
-  gray.delete();
-  edges.delete();
-  contours.delete();
-  hierarchy.delete();
+
+  ctx.putImageData(imgData, 0, 0);
   
   requestAnimationFrame(processFrame);
-}
-
-// Warp perspective
-function applyWarp(src, quad) {
-  let srcPoints = [];
-  for (let i = 0; i < 4; i++) {
-    srcPoints.push({
-      x: quad.data32S[i * 2],
-      y: quad.data32S[i * 2 + 1]
-    });
-  }
-  
-  srcPoints.sort((a, b) => a.x - b.x);
-  let left = [srcPoints[0], srcPoints[1]].sort((a, b) => a.y - b.y);
-  let right = [srcPoints[2], srcPoints[3]].sort((a, b) => a.y - b.y);
-  
-  let srcMat = cv.matFromArray(4, 1, cv.CV_32F, [
-    left[0].x, left[0].y,
-    right[0].x, right[0].y,
-    right[1].x, right[1].y,
-    left[1].x, left[1].y
-  ]);
-  
-  let dstMat = cv.matFromArray(4, 1, cv.CV_32F, [
-    0, 0,
-    pipCanvas.width, 0,
-    pipCanvas.width, pipCanvas.height,
-    0, pipCanvas.height
-  ]);
-  
-  let perspective = cv.getPerspectiveTransform(srcMat, dstMat);
-  let warped = new cv.Mat();
-  cv.warpPerspective(src, warped, perspective, new cv.Size(pipCanvas.width, pipCanvas.height));
-  
-  cv.imshow('pipCanvas', warped);
-  
-  warped.delete();
-  srcMat.delete();
-  dstMat.delete();
-  perspective.delete();
 }
 
 // Crypto seal
 async function cryptoSeal() {
   try {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = pipCanvas.width;
-    tempCanvas.height = pipCanvas.height;
-    tempCanvas.getContext('2d').drawImage(pipCanvas, 0, 0);
-    
-    if (currentMode === 'ocr') {
-      const { data: { text } } = await Tesseract.recognize(tempCanvas, 'eng');
-      document.getElementById('ocrText').textContent = text || '[No text detected]';
-      document.getElementById('ocrResult').style.display = 'block';
-    }
-    
     const timestamp = new Date().toISOString();
+    const frameData = overlay.toDataURL('image/png').substring(0, 50) + '...';
+    
     const entry = {
       ts: timestamp,
-      mode: currentMode,
+      frame: frameData,
       threshold: threshValue,
-      area: areaValue,
       sealed: '✓'
     };
     
@@ -581,7 +317,7 @@ async function cryptoSeal() {
     localStorage.setItem('rosettaVault', JSON.stringify(vault));
     
     renderLedger();
-    alert('✅ GLYPH SEALED & ENCRYPTED TO VAULT');
+    alert('✅ FRAME SEALED & ENCRYPTED TO VAULT');
   } catch (e) {
     alert('Error: ' + e.message);
   }
@@ -601,7 +337,7 @@ function renderLedger() {
     <div class="ledger-entry">
       <div class="timestamp">${new Date(e.ts).toLocaleTimeString()}</div>
       <div style="margin-top: 4px;">
-        ${e.mode === 'ocr' ? '📝 OCR' : '📷 WARP'} | Thresh: ${e.threshold} | Area: ${e.area}
+        SEALED | Threshold: ${e.threshold}
       </div>
     </div>
   `).join('');
@@ -615,14 +351,9 @@ function clearVault() {
 }
 
 // Init
-updateStatus('✓ CORE EXTENSION ENROLLED — READY FOR DEPLOYMENT', true);
 renderLedger();
-
-// Auto-init when OpenCV loads
-function onOpenCvReady() {
-  console.log('OpenCV.js is ready');
-}
 </script>
 
 </body>
 </html>
+
